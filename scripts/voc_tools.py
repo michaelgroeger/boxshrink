@@ -2,10 +2,6 @@ from bs4 import BeautifulSoup
 import os
 import xml.etree.ElementTree as ET
 from tqdm import tqdm
-# Commented out and use of functions because of 
-# ImportError: cannot import name '_registerMatType' from 'cv2.cv2' (/usr/local/lib/python3.7/dist-packages/cv2/cv2.cpython-37m-x86_64-linux-gnu.so)
-# from cv2 import cv2
-# from bounding_box import bounding_box as bb
 import pandas as pd
 import numpy as np
 from PIL import Image
@@ -18,8 +14,11 @@ import shutil
 import matplotlib.pyplot as plt
 from torchvision.transforms import ToPILImage
 
-# mapping & label colors copied into here because I don't know yet how to reference a script in a script when being in colab
-# So I need the mapping here for my resize images problem
+#############################################################################################################################
+# This is a collection of scripts we wrote for our first experiments on PascalVOC.                                          #
+# We later needed to switch the datasets because we were lacking the resources for a dataset of the size of PascalVOC.      # 
+# We still publish it here since some people might find them useful and we uses some of the scripts in the Boxshrink paper. #
+#############################################################################################################################
 label_colors = np.array(
     [
         (0, 0, 0),  # Class 0
@@ -45,8 +44,9 @@ label_colors = np.array(
         (128, 0, 128),  # Class  20
     ]
 )
+
+
 # Function to return all files with a certain ending
-# Define helper function
 def return_files_in_directory(path, ending):
     """Returns all files with a certain ending in path
 
@@ -199,10 +199,6 @@ def import_dataset(input_path):
     df = pd.read_csv(input_path)
     return df.values.tolist()
 
-
-# Function to get all objects present in a dataset and return a csv with their name and class id -> Analyse dataset
-## TO-DO
-
 # Check pattern of bounding box coordinates
 def check_box_coordinates(box_coordinate):
     if "." in box_coordinate:
@@ -240,34 +236,6 @@ def get_bounding_boxes(xml_file: str):
         list_with_all_boxes.append({classname: list_with_single_boxes})
 
     return filename, list_with_all_boxes
-
-
-# def export_image_with_bounding_boxes(annotation_path, image_folder, output_path):
-#     """Plots image with bounding boxes
-
-#     Args:
-#         annotation_path (string): Path to annotation file
-#         image_folder (string): Path to folder that holds images
-#         output_path (string): Path to folder where images should be saved
-#     """
-#     # get annotation data from annotation file
-#     annotation_data = get_bounding_boxes(annotation_path)
-#     file_name = annotation_data[0]
-#     # Build path to image
-#     filepath = image_folder + "/" + file_name
-#     # Open image in BRG format via open cv
-#     image = cv2.imread(filepath, cv2.IMREAD_COLOR)
-#     for box in annotation_data[1]:
-#         class_name = list(box.keys())[0]
-#         bb.add(
-#             image,
-#             box[class_name][0],
-#             box[class_name][1],
-#             box[class_name][2],
-#             box[class_name][3],
-#             class_name,
-#         )
-#     cv2.imwrite(output_path + "/" + file_name, image)
 
 
 # Function to extract class information of all categories present in the dataset, build csv holding class and color information and export csv
@@ -354,9 +322,6 @@ def generate_mask_from_box(
                 box[category][2],
                 box[category][3],
             )
-
-            # Python does array[inclusive:exclusive] therefore we need to add + 1 to the max values
-            # But then we also need to catch the case that the +1 will be out of the image
             if ymax != image_height:
                 ymax = ymax + 1
             if xmax != image_width:
@@ -540,35 +505,6 @@ def get_classes_from_mask(mask, class_list=None):
         # return everything except the first class since it corresponds to background
         return (most_common_class, all_classes)
 
-# Duplicate
-# # Helper function to convert the masks
-# def rgb_to_mask(mask_path, color_map):
-#     """
-#     Converts a RGB image mask of shape [batch_size, h, w, 3] to Mask of shape [h, w]. If the image is
-#     JPG please make sure that there are no additional colors on the mask than the one present in the mapping. You
-#     can check this by passing the image as a numpy array to np.unique(mask).
-#     Parameters:
-#         img: path to RGB image
-#         color_map: Dictionary representing color mappings
-#     returns:
-#         out: A Binary Mask of shape [h, w] as numpy array
-#     """
-#     image = Image.open(mask_path)
-#     # Template for outgoing mask
-#     out = np.zeros([image.size[1], image.size[0]], dtype=np.long)
-#     # Iterate over pixels of image
-#     for j in range(image.size[0] - 1):
-#         for z in range(image.size[1] - 1):
-#             current_pixel = image.getpixel((j, z))
-#             if current_pixel in color_map:
-#                 out[z, j] = color_map[current_pixel]
-#             else:
-#                 out[z, j] = 0
-#     return out
-
-    # helper function for data visualization
-
-
 def visualize(**images):
     """PLot images in one row."""
     n = len(images)
@@ -649,7 +585,6 @@ def make_prediction_on_image(dataloader, index, model):
     outputs = model(image)
     # get argmax for iou calculation, and reshape to same size as label
     out_max = torch.argmax(outputs, dim=1, keepdim=True)[:, -1, :, :]
-    iou_score = IoU(label, out_max)
     rgb_pred = decode_segmap(out_max.detach().cpu().squeeze().numpy()[index, :, :])
     rgb_gt_mask = decode_segmap(label.detach().cpu().squeeze().numpy()[index, :, :])
     show_image = image[index, :, :, :].permute(1, 2, 0).cpu()
@@ -828,7 +763,7 @@ def export_return_batch_information(
     boxshink_mask= Image.fromarray(decode_segmap(
         boxmasks.detach().cpu().squeeze().numpy(), label_colors, nc
         ))
-    show_image = transforms.ToPILImage()(image.cpu().detach().squeeze())
+    show_image = ToPILImage()(image.cpu().detach().squeeze())
     class_in_gt_mask = get_classes_from_mask(label, class_list)
     class_in_prediction = get_classes_from_mask(argmax_prediction, class_list)
     # Ensure same encoding
