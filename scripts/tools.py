@@ -6,15 +6,6 @@ import os
 import torch 
 from PIL import Image
 import matplotlib.pyplot as plt
-from voc_tools import (
-    return_files_in_directory,
-    decode_segmap,
-    get_classes_from_mask,
-    rgb_to_mask,
-    visualize,
-    return_batch_information,
-    flatten
-    )
 from torchvision.transforms import ToPILImage
 
 
@@ -62,16 +53,16 @@ def decode_segmap(image, label_colors, nc):
 
 # Helper function to get the classes from a mask
 def get_classes_from_mask(mask, class_list=None):
-    """Will take as input a mask and a optional list of class names. The class names must coincide with the class indexes to make sense.
+    """Will take as input a mask and an optional list of class names. The class names must coincide with the class indexes to make sense.
     It will flatten the mask into a 1-D array and drop all zeros since they are the background class and most often the most occuring class.
     It will then get the mode and either look up the class string in the class list or simply return the class index.
 
     Args:
-        mask (tensor): [description]
+        mask (tensor): tensor of the segmentation mask
         class_list (list, optional): List holding class names as strings. Defaults to None.
 
     Returns:
-        [string or int]: Either the class string or the class index.
+        [set]: Set of either the class strings or the class indexes.
     """
     # flatten mask to be able to apply mode
     mask = torch.flatten(mask)
@@ -96,9 +87,7 @@ def get_classes_from_mask(mask, class_list=None):
 # Helper function to convert the masks
 def rgb_to_mask(mask_path, color_map, device=None):
     """
-    Converts a RGB image mask of shape [batch_size, h, w, 3] to Mask of shape [h, w]. If the image is
-    JPG please make sure that there are no additional colors on the mask than the one present in the mapping. You
-    can check this by passing the image as a numpy array to np.unique(mask).
+    Converts segmentation mask image to class index map to be fed into the network
     Parameters:
         img: path to RGB image
         color_map: Dictionary representing color mappings
@@ -122,7 +111,7 @@ def rgb_to_mask(mask_path, color_map, device=None):
     return out
 
 def visualize(**images):
-    """PLot images in one row."""
+    """Plot images in one row."""
     n = len(images)
     plt.figure(figsize=(16, 5))
     for i, (name, image) in enumerate(images.items()):
@@ -133,7 +122,22 @@ def visualize(**images):
         plt.imshow(image)
     plt.show()
 
-def return_batch_information(image, argmax_prediction, boxmasks, label, index, class_list, label_colors=label_colors, nc=21):
+def return_batch_information(image, argmax_prediction, label, index, class_list, label_colors, nc):
+    """We used this function during training to debug the training process. You can call it every x Epoch/Batch.
+    It will plot the image, the model prediction and the ground truth label in one line for the example in the
+    current batch at the given index. It will also print the classes present on the ground truth and prediction to see if
+    there are any small artifacts.
+
+    Args:
+        image (tensor): Image batch
+        argmax_prediction (tensor): Argmaxed prediction of model for batch
+        label (_type_): Ground truth labels for batch
+        index (_type_): index of example of batch you'd like to investigate
+        class_list (_type_): _description_
+        label_colors (_type_): _description_
+        nc (_type_): _description_
+    """
+    # Case more than one image in batch
     if image.shape[0] > 1:
         rgb_pred = decode_segmap(
             argmax_prediction.detach().cpu().squeeze().numpy()[index, :, :], label_colors, nc
@@ -141,9 +145,6 @@ def return_batch_information(image, argmax_prediction, boxmasks, label, index, c
         rgb_gt_mask = decode_segmap(
             label.detach().cpu().squeeze().numpy()[index, :, :], label_colors, nc
         )
-        boxshink_mask= Image.fromarray(decode_segmap(
-            boxmasks.detach().cpu().squeeze().numpy()[index, :, :], label_colors, nc
-            ))
         show_image = ToPILImage()(image[index,:,:,:].cpu().detach().squeeze())
         class_in_gt_mask = get_classes_from_mask(label[index, :, :], class_list)
         class_in_prediction = get_classes_from_mask(
@@ -151,10 +152,10 @@ def return_batch_information(image, argmax_prediction, boxmasks, label, index, c
         )
         # Ensure same encoding
         background = show_image.convert("RGBA")
-        overlay_prediction = boxshink_mask.convert("RGBA")
         # Create new image from overlap and make overlay 50 % transparent
+        overlay_prediction = rgb_pred.convert("RGBA")
         prediction_with_image = Image.blend(background, overlay_prediction, 0.5)
-        visualize(image=show_image, ground_truth=rgb_gt_mask, prediction=rgb_pred, boxshrink_mask=boxshink_mask, image_with_boxshrink=prediction_with_image)
+        visualize(image=show_image, ground_truth=rgb_gt_mask, prediction=rgb_pred, prediction_with_image=prediction_with_image)
         print(
             f"\nMost common ground truth class {class_in_gt_mask[0]}, all other classes {class_in_gt_mask[1]}"
         )
@@ -168,9 +169,6 @@ def return_batch_information(image, argmax_prediction, boxmasks, label, index, c
         rgb_gt_mask = decode_segmap(
             label.detach().cpu().squeeze().numpy(), label_colors, nc
         )
-        boxshink_mask= Image.fromarray(decode_segmap(
-            boxmasks.detach().cpu().squeeze().numpy(), label_colors, nc
-            ))
         show_image = ToPILImage()(image.cpu().detach().squeeze())
         class_in_gt_mask = get_classes_from_mask(label, class_list)
         class_in_prediction = get_classes_from_mask(
@@ -178,9 +176,9 @@ def return_batch_information(image, argmax_prediction, boxmasks, label, index, c
         )
         # Ensure same encoding
         background = show_image.convert("RGBA")
-        overlay_prediction = boxshink_mask.convert("RGBA")
+        overlay_prediction = rgb_pred.convert("RGBA")
         prediction_with_image = Image.blend(background, overlay_prediction, 0.5)
-        visualize(image=show_image, ground_truth=rgb_gt_mask, prediction=rgb_pred, boxshrink_mask=boxshink_mask, image_with_boxshrink=prediction_with_image)
+        visualize(image=show_image, ground_truth=rgb_gt_mask, prediction=rgb_pred, prediction_with_image=prediction_with_image)
         print(
             f"\nMost common ground truth class {class_in_gt_mask[0]}, all other classes {class_in_gt_mask[1]}"
         )
