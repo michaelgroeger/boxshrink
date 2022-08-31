@@ -122,69 +122,34 @@ def visualize(**images):
         plt.imshow(image)
     plt.show()
 
-def return_batch_information(image, argmax_prediction, label, index, class_list, label_colors, nc):
-    """We used this function during training to debug the training process. You can call it every x Epoch/Batch.
-    It will plot the image, the model prediction and the ground truth label in one line for the example in the
-    current batch at the given index. It will also print the classes present on the ground truth and prediction to see if
-    there are any small artifacts.
+def return_batch_information(org_img, argmax_prediction, label, index, class_list, label_colors):
+    """Returns image, ground truth and current prediction of one element at index at the batch for debugging purposes.
 
     Args:
-        image (tensor): Image batch
-        argmax_prediction (tensor): Argmaxed prediction of model for batch
-        label (_type_): Ground truth labels for batch
-        index (_type_): index of example of batch you'd like to investigate
-        class_list (_type_): _description_
-        label_colors (_type_): _description_
-        nc (_type_): _description_
+        org_img (tensor): original, unnormalized image
+        argmax_prediction (tensor): argmaxed model output for batch
+        label (tensor): ground truth label
+        index (_type_): index of element in batch
+        class_list (_type_, optional): _description_. Defaults to CLASSES.
+        label_colors (_type_, optional): _description_. Defaults to label_colors.
     """
-    # Case more than one image in batch
-    if image.shape[0] > 1:
-        rgb_pred = decode_segmap(
-            argmax_prediction.detach().cpu().squeeze().numpy()[index, :, :], label_colors, nc
-        )
-        rgb_gt_mask = decode_segmap(
-            label.detach().cpu().squeeze().numpy()[index, :, :], label_colors, nc
-        )
-        show_image = ToPILImage()(image[index,:,:,:].cpu().detach().squeeze())
-        class_in_gt_mask = get_classes_from_mask(label[index, :, :], class_list)
-        class_in_prediction = get_classes_from_mask(
-            argmax_prediction[index, :, :], class_list
-        )
+    nc = len(class_list)
+    if org_img.shape[0] > 1:
+        rgb_pred = Image.fromarray(decode_segmap(
+            argmax_prediction[index, :, :].squeeze(), label_colors, nc
+        ))
+        label_image = Image.fromarray(decode_segmap(
+            label[index, :, :].detach().cpu().squeeze().numpy(), label_colors, nc
+            ))
+        show_image = ToPILImage()(org_img[index,:,:,:].permute(2,0,1).cpu().detach().squeeze())
         # Ensure same encoding
         background = show_image.convert("RGBA")
+        overlaylabel = label_image.convert("RGBA")
+        overlaypred = rgb_pred.convert("RGBA")
+        label_with_image = Image.blend(background, overlaylabel, 0.5)
         # Create new image from overlap and make overlay 50 % transparent
-        overlay_prediction = rgb_pred.convert("RGBA")
-        prediction_with_image = Image.blend(background, overlay_prediction, 0.5)
-        visualize(image=show_image, ground_truth=rgb_gt_mask, prediction=rgb_pred, prediction_with_image=prediction_with_image)
-        print(
-            f"\nMost common ground truth class {class_in_gt_mask[0]}, all other classes {class_in_gt_mask[1]}"
-        )
-        print(
-            f"\nMost common prediction class {class_in_prediction[0]}, all other classes {class_in_prediction[1]}"
-        )
-    else:
-        rgb_pred = decode_segmap(
-            argmax_prediction.detach().cpu().squeeze().numpy(), label_colors, nc
-        )
-        rgb_gt_mask = decode_segmap(
-            label.detach().cpu().squeeze().numpy(), label_colors, nc
-        )
-        show_image = ToPILImage()(image.cpu().detach().squeeze())
-        class_in_gt_mask = get_classes_from_mask(label, class_list)
-        class_in_prediction = get_classes_from_mask(
-            argmax_prediction, class_list
-        )
-        # Ensure same encoding
-        background = show_image.convert("RGBA")
-        overlay_prediction = rgb_pred.convert("RGBA")
-        prediction_with_image = Image.blend(background, overlay_prediction, 0.5)
-        visualize(image=show_image, ground_truth=rgb_gt_mask, prediction=rgb_pred, prediction_with_image=prediction_with_image)
-        print(
-            f"\nMost common ground truth class {class_in_gt_mask[0]}, all other classes {class_in_gt_mask[1]}"
-        )
-        print(
-            f"\nMost common prediction class {class_in_prediction[0]}, all other classes {class_in_prediction[1]}"
-        )
+        prediction_with_image = Image.blend(background, overlaypred, 0.5)
+        visualize(org_img=show_image, prediction_with_image=prediction_with_image, label_with_image=label_with_image)
 
 
 # Function to unpack and flatten a list of lists
