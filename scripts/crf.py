@@ -56,9 +56,9 @@ def process_batch_crf(img_org, mask):
         return crf(img_org, mask).to(device)
     
 
-def pass_pseudomask_or_ground_truth(masks, pseudomasks, iou_threshold=IOU_THRESHOLD, mask_occupancy_threshold=MASK_OCCUPANCY_THRESHOLD, device=device, IoU=jaccard_crf):
+def pass_pseudomask_or_ground_truth(masks, pseudomasks, iou_threshold=IOU_THRESHOLD, mask_occupancy_threshold=MASK_OCCUPANCY_THRESHOLD, IoU=jaccard_crf):
     if masks.dim() > 2:
-        batch = torch.zeros(masks.shape, dtype=torch.float32).to(device)
+        batch = torch.zeros(masks.shape, dtype=torch.float32)
         pseudomasks_count = 0
         for i in range(masks.shape[0]):
             total_mask_occupancy = torch.count_nonzero(masks[i]) / (masks[i].shape[0] * masks[i].shape[1])
@@ -76,7 +76,7 @@ def pass_pseudomask_or_ground_truth(masks, pseudomasks, iou_threshold=IOU_THRESH
         else:
             return pseudomasks
 
-def export_crf_masks_for_train_data(dataset, export_path="/content/gdrive/MyDrive/University/FEA_Internship/data/VOCdevkit/VOC2012/datasets/colonoscopy/crf_masks/adjusted_it_03_mot_005_pbsxy2525_pbsrb10_pgsxy5"):
+def export_crf_masks_for_train_data(dataset, export_path):
         images = dataset.X
         masks = dataset.Y
         for i, _ in tqdm(enumerate(images)):
