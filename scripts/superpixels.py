@@ -82,16 +82,16 @@ def export_superpixel_crf_masks_for_train_data(dataset, export_path):
             img = torch.tensor(imread(_))
             # load mask
             if ".tif" in masks[i]:
-            mask = torch.tensor(imread(masks[i])).long()
-        elif ".png" in masks[i]:
-            mask = torch.Tensor(np.array(Image.open(masks[i]))).long()
-            mask[mask>0] = 1    
-            sp_mask = create_superpixel_mask(mask, img, N_SEGMENTS=200, threshold=0.60)
-            img, sp_mask = img, sp_mask
-            pseudomask = process_batch_crf(img, sp_mask)
-            pseudomask = pass_pseudomask_or_ground_truth(mask, pseudomask)
-            pseudomask = Image.fromarray(np.uint8(pseudomask * 255) , 'L')
-            output_path_mask = (
-            export_path + "/" + _.split('/')[-1]
-            ).replace("tif", "png")
-            pseudomask.save(output_path_mask, quality=100, subsampling=0)
+                mask = torch.tensor(imread(masks[i])).long()
+            elif ".png" in masks[i]:
+                mask = torch.Tensor(np.array(Image.open(masks[i]))).long()
+                mask[mask>0] = 1    
+                sp_mask = create_superpixel_mask(mask, img, N_SEGMENTS=200, threshold=0.60)
+                img, sp_mask = img, sp_mask
+                pseudomask = process_batch_crf(img, sp_mask)
+                pseudomask = pass_pseudomask_or_ground_truth(mask, pseudomask)
+                pseudomask = Image.fromarray(np.uint8(pseudomask * 255) , 'L')
+                output_path_mask = (
+                export_path + "/" + _.split('/')[-1]
+                ).replace("tif", "png")
+                pseudomask.save(output_path_mask, quality=100, subsampling=0)
