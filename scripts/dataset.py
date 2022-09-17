@@ -1,4 +1,12 @@
 from torch.utils.data import Dataset
+import torchvision.transforms as transforms
+from torchvision.transforms import ToTensor
+
+img_transform = transforms.Compose(
+        [transforms.ToTensor(),
+        transforms.Normalize((0.4040, 0.4368, 0.4569), (0.2812, 0.2678, 0.2710))
+        ])
+
 class Colonoscopy_Dataset(Dataset):
     def __init__(self, X, Y, img_transform=img_transform, limit_dataset_size=None):
         self.X = X
