@@ -1,8 +1,13 @@
-from numpy.core.numeric import count_nonzero
 from skimage.segmentation import slic
 from skimage.segmentation import mark_boundaries
 import torch
 from crf import pass_pseudomask_or_ground_truth
+from tifffile import imread
+import matplotlib.pyplot as plt
+from PIL import Image
+from tqdm import tqdm
+from crf import process_batch_crf
+import numpy as np
 
 def create_superpixel_mask(initial_mask, image, threshold = 0.50, class_indx=1,  N_SEGMENTS=200, compactness=10, sigma=1, start_label=1):
     # get superpixels
@@ -74,7 +79,7 @@ def visualize_superpixels(boundaries, **images):
         plt.imshow(mark_boundaries(image, boundaries))
     plt.show()
 
-def export_superpixel_crf_masks_for_train_data(dataset, export_path):
+def export_superpixel_crf_masks_for_dataset(dataset, export_path):
         images = dataset.X
         masks = dataset.Y
         for i, _ in tqdm(enumerate(images)):

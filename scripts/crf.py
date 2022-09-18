@@ -1,12 +1,15 @@
 import cv2
 from torchmetrics import JaccardIndex
 import pydensecrf.densecrf as dcrf
+from pydensecrf.utils import unary_from_softmax
 import numpy as np
 import torch 
 from tqdm import tqdm
 from PIL import Image
+from config import CLASSES, IOU_THRESHOLD, MASK_OCCUPANCY_THRESHOLD
+from tifffile import imread
 
-jaccard_crf = JaccardIndex(num_classes=len(CLASSES), reduction='None', ignore_index=0).to(device)
+jaccard_crf = JaccardIndex(num_classes=len(CLASSES), average='None', ignore_index=0)
 
 def crf(img_org, mask, pb_sxy=(25,25), pb_srgb=(10,10,10), pg_sxy=(5,5)):
     img_np = img_org.cpu().detach().numpy()
@@ -47,13 +50,13 @@ def crf(img_org, mask, pb_sxy=(25,25), pb_srgb=(10,10,10), pg_sxy=(5,5)):
 
 def process_batch_crf(img_org, mask):
     if img_org.dim() > 3:
-        batch = torch.zeros(mask.shape, dtype=torch.int64).to(device)
+        batch = torch.zeros(mask.shape, dtype=torch.int64)
         for i in range(len(img_org)):
-            pseudomask = crf(img_org[i], mask[i]).to(device)
+            pseudomask = crf(img_org[i], mask[i])
             batch[i,:,:] = pseudomask
         return batch
     else:
-        return crf(img_org, mask).to(device)
+        return crf(img_org, mask)
     
 
 def pass_pseudomask_or_ground_truth(masks, pseudomasks, iou_threshold=IOU_THRESHOLD, mask_occupancy_threshold=MASK_OCCUPANCY_THRESHOLD, IoU=jaccard_crf):
@@ -88,7 +91,7 @@ def export_crf_masks_for_train_data(dataset, export_path):
             elif ".png" in masks[i]:
                 mask = torch.Tensor(np.array(Image.open(masks[i]))).long()
             mask[mask>0] = 1    
-            img, mask = img.to(device), mask.to(device)
+            img, mask = img, mask
             pseudomask = process_batch_crf(img, mask)
             pseudomask = pass_pseudomask_or_ground_truth(mask, pseudomask)
             pseudomask = Image.fromarray(np.uint8(pseudomask.cpu().detach() * 255) , 'L')
