@@ -17,6 +17,7 @@ class Colonoscopy_Dataset(Dataset):
         self.Y = Y
         self.img_transform = img_transform
         self.limit_dataset_size = limit_dataset_size
+        
     def __len__(self):
       if self.limit_dataset_size is not None: 
         return self.limit_dataset_size

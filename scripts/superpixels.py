@@ -37,38 +37,13 @@ def create_superpixel_mask(initial_mask, image, threshold = 0.50, class_indx=1, 
     base_mask = base_mask * class_indx
     return base_mask.type(torch.IntTensor)
 
-# def precomputed_create_superpixel_mask(argmax_prediction_per_class, boundaries, threshold = 0.50, class_indx=4):
-#     # get superpixels
-#     with torch.no_grad():
-#         pred_cleaned = argmax_prediction_per_class.squeeze(0).clone()
-#         pred_cleaned[pred_cleaned != class_indx] = 0
-#         hadamard = boundaries * pred_cleaned
-#         overlap = (hadamard / class_indx).type(torch.IntTensor)
-#         # Instantiate base mask
-#         base_mask = torch.zeros(overlap.shape)
-#         # Get numbers to list, start from second element because first is 0 
-#         relevant_superpixels = torch.unique(overlap).int().tolist()[1:]
-#         for superpixel in relevant_superpixels:
-#             temp = overlap.clone()
-#             org = boundaries.clone()
-#             # Check how many are non-zero in superpixel mask
-#             temp[temp != superpixel] = 0
-#             org[org != superpixel] = 0
-#             # Check how many are non-zero in overlap
-#             # Determine share of pixels
-#             share = torch.count_nonzero(temp).item() / torch.count_nonzero(org).item()
-#             # Add superpixel as ones to base mask if share is over threshold
-#             if share > threshold:
-#                 # bring org values to one
-#                 org = org / torch.unique(org)[1].item()
-#                 base_mask += org
-#         # make values in base_mask equal the class value
-#         base_mask = base_mask * class_indx
-#         base_mask[(base_mask != 0) & (base_mask != class_indx)] = class_indx
-#         return base_mask.type(torch.IntTensor)
-
 def visualize_superpixels(boundaries, **images):
-    """Plot images in one row."""
+    """Helper function to plot images in one row 
+    with the superpixels on top of them
+
+    Args:
+        boundaries (numpy array): output from SLIC algorithm, e.g. all_superpixels_mask above
+    """
     n = len(images)
     plt.figure(figsize=(25, 10))
     for i, (name, image) in enumerate(images.items()):
@@ -79,7 +54,7 @@ def visualize_superpixels(boundaries, **images):
         plt.imshow(mark_boundaries(image, boundaries))
     plt.show()
 
-def export_superpixel_crf_masks_for_dataset(dataset, export_path):
+def export_superpixel_crf_masks_for_dataset(dataset, export_path, N_SEGMENTS=200, THRESHOLD=0.60):
         images = dataset.X
         masks = dataset.Y
         for i, _ in tqdm(enumerate(images)):
@@ -91,7 +66,7 @@ def export_superpixel_crf_masks_for_dataset(dataset, export_path):
             elif ".png" in masks[i]:
                 mask = torch.Tensor(np.array(Image.open(masks[i]))).long()
                 mask[mask>0] = 1    
-                sp_mask = create_superpixel_mask(mask, img, N_SEGMENTS=200, threshold=0.60)
+                sp_mask = create_superpixel_mask(mask, img, N_SEGMENTS=N_SEGMENTS, threshold=THRESHOLD)
                 img, sp_mask = img, sp_mask
                 pseudomask = process_batch_crf(img, sp_mask)
                 pseudomask = pass_pseudomask_or_ground_truth(mask, pseudomask)
