@@ -4,13 +4,13 @@ CVC-ClinicDB
 Introduction
 --------------------------------------------------
 
-CVC-ClinicDB is a database of frames extracted from colonoscopy videos. 
-These frames contain several examples of polyps. In addition to the frames, we provide the ground truth for the polyps. 
+CVC-ClinicDB is a database of frames extracted from colonoscopy videos.
+These frames contain several examples of polyps. In addition to the frames, we provide the ground truth for the polyps.
 This ground truth consists of a mask corresponding to the region covered by the polyp in the image.
 
-CVC-ClinicDB has been generated from 25 different video studies. For each study at least a sequence containing a polyp was extracted. Considering this, CVC-ClinicDB database is composed by frames from 29 different sequences containing a polyp. 
+CVC-ClinicDB has been generated from 25 different video studies. For each study at least a sequence containing a polyp was extracted. Considering this, CVC-ClinicDB database is composed by frames from 29 different sequences containing a polyp.
 
-Finally, a set of frames were selected from each sequence, paying particular attention in showing several points of view of the polyp. 
+Finally, a set of frames were selected from each sequence, paying particular attention in showing several points of view of the polyp.
 
 --------------------------------------------------
 Description
@@ -20,7 +20,7 @@ The database consists of two different types of images:
 1) Original images: original/frame_number.tiff
 2) Polyp mask: ground truth/frame_number.tiff
 
-The correspondence between the number of frame and the video sequence is as follows: 
+The correspondence between the number of frame and the video sequence is as follows:
 
        ----------------------------------
        |                  |		           |
@@ -60,7 +60,7 @@ The correspondence between the number of frame and the video sequence is as foll
        ----------------------------------
 
 
-CVC-ClinicDB is the database to be used in the training stages of ISBI 2015 Challenge on Automatic Polyp Detection Challenge in Colonoscopy Videos. 
+CVC-ClinicDB is the database to be used in the training stages of ISBI 2015 Challenge on Automatic Polyp Detection Challenge in Colonoscopy Videos.
 
 --------------------------------------------------
 Copyright

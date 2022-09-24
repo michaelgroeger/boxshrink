@@ -3,7 +3,7 @@
 #############################################################################################################################
 import numpy as np
 import os
-import torch 
+import torch
 from PIL import Image
 import matplotlib.pyplot as plt
 from torchvision.transforms import ToPILImage
@@ -26,6 +26,7 @@ def return_files_in_directory(path, ending):
             file_paths.append(os.path.join(root, file))
     filtered_files = [file for file in file_paths if ending in file]
     return filtered_files
+
 
 # From: https://captum.ai/tutorials/Segmentation_Interpret
 def decode_segmap(image, label_colors, nc):
@@ -51,6 +52,7 @@ def decode_segmap(image, label_colors, nc):
     rgb = np.stack([r, g, b], axis=2)
     return rgb
 
+
 # Helper function to get the classes from a mask
 def get_classes_from_mask(mask, class_list=None):
     """Will take as input a mask and an optional list of class names. The class names must coincide with the class indexes to make sense.
@@ -66,7 +68,7 @@ def get_classes_from_mask(mask, class_list=None):
     """
     # flatten mask to be able to apply mode
     mask = torch.flatten(mask)
-    
+
     # Drop zeros since they're the background class
     mask = mask[mask != 0]
     if len(mask) == 0:
@@ -84,6 +86,7 @@ def get_classes_from_mask(mask, class_list=None):
         # return everything except the first class since it corresponds to background
         return (most_common_class, all_classes)
 
+
 # Helper function to convert the masks
 def rgb_to_mask(mask_path, color_map, device=None):
     """
@@ -97,7 +100,9 @@ def rgb_to_mask(mask_path, color_map, device=None):
     image = Image.open(mask_path)
     # Template for outgoing mask
     if device != None:
-        out = torch.zeros([image.size[1], image.size[0]], dtype=np.long, device=torch.device(device))
+        out = torch.zeros(
+            [image.size[1], image.size[0]], dtype=np.long, device=torch.device(device)
+        )
     else:
         out = torch.zeros([image.size[1], image.size[0]], dtype=np.long)
     # Iterate over pixels of image
@@ -109,6 +114,7 @@ def rgb_to_mask(mask_path, color_map, device=None):
             else:
                 out[z, j] = 0
     return out
+
 
 def visualize(**images):
     """Plot images in one row."""
@@ -122,7 +128,10 @@ def visualize(**images):
         plt.imshow(image)
     plt.show()
 
-def return_batch_information(org_img, argmax_prediction, label, index, class_list, label_colors):
+
+def return_batch_information(
+    org_img, argmax_prediction, label, index, class_list, label_colors
+):
     """Returns image, ground truth and current prediction of one element at index at the batch for debugging purposes.
 
     Args:
@@ -135,13 +144,17 @@ def return_batch_information(org_img, argmax_prediction, label, index, class_lis
     """
     nc = len(class_list)
     if org_img.shape[0] > 1:
-        rgb_pred = Image.fromarray(decode_segmap(
-            argmax_prediction[index, :, :].squeeze(), label_colors, nc
-        ))
-        label_image = Image.fromarray(decode_segmap(
-            label[index, :, :].detach().cpu().squeeze().numpy(), label_colors, nc
-            ))
-        show_image = ToPILImage()(org_img[index,:,:,:].permute(2,0,1).cpu().detach().squeeze())
+        rgb_pred = Image.fromarray(
+            decode_segmap(argmax_prediction[index, :, :].squeeze(), label_colors, nc)
+        )
+        label_image = Image.fromarray(
+            decode_segmap(
+                label[index, :, :].detach().cpu().squeeze().numpy(), label_colors, nc
+            )
+        )
+        show_image = ToPILImage()(
+            org_img[index, :, :, :].permute(2, 0, 1).cpu().detach().squeeze()
+        )
         # Ensure same encoding
         background = show_image.convert("RGBA")
         overlaylabel = label_image.convert("RGBA")
@@ -149,7 +162,11 @@ def return_batch_information(org_img, argmax_prediction, label, index, class_lis
         label_with_image = Image.blend(background, overlaylabel, 0.5)
         # Create new image from overlap and make overlay 50 % transparent
         prediction_with_image = Image.blend(background, overlaypred, 0.5)
-        visualize(org_img=show_image, prediction_with_image=prediction_with_image, label_with_image=label_with_image)
+        visualize(
+            org_img=show_image,
+            prediction_with_image=prediction_with_image,
+            label_with_image=label_with_image,
+        )
 
 
 # Function to unpack and flatten a list of lists
@@ -160,6 +177,7 @@ def flatten(L):
             yield from flatten(item)
         except TypeError:
             yield item
+
 
 # For sorting images and masks
 # https://nedbatchelder.com/blog/200712/human_sorting.html
@@ -172,6 +190,7 @@ def tryint(s):
     except ValueError:
         return s
 
+
 def alphanum_key(s):
     """
     Turn a string into a list of string and number chunks.
@@ -180,7 +199,8 @@ def alphanum_key(s):
     ["z", 23, "a"]
 
     """
-    return [ tryint(c) for c in re.split('([0-9]+)', s) ]
+    return [tryint(c) for c in re.split("([0-9]+)", s)]
+
 
 def human_sort(l):
     """

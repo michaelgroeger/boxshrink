@@ -9,15 +9,33 @@ from tqdm import tqdm
 from crf import process_batch_crf
 import numpy as np
 
-def create_superpixel_mask(initial_mask, image, threshold = 0.50, class_indx=1,  N_SEGMENTS=200, compactness=10, sigma=1, start_label=1):
+
+def create_superpixel_mask(
+    initial_mask,
+    image,
+    threshold=0.50,
+    class_indx=1,
+    N_SEGMENTS=200,
+    compactness=10,
+    sigma=1,
+    start_label=1,
+):
     # get superpixels
     image = image.cpu().detach().numpy()
-    all_superpixels_mask = torch.from_numpy(slic(image, n_segments=N_SEGMENTS, compactness=compactness, sigma=sigma, start_label=start_label))
+    all_superpixels_mask = torch.from_numpy(
+        slic(
+            image,
+            n_segments=N_SEGMENTS,
+            compactness=compactness,
+            sigma=sigma,
+            start_label=start_label,
+        )
+    )
     hadamard = all_superpixels_mask * initial_mask
     overlap = (hadamard / class_indx).type(torch.IntTensor)
     # Instantiate base mask
     base_mask = torch.zeros(overlap.shape)
-    # Get numbers to list, start from second element because first is 0 
+    # Get numbers to list, start from second element because first is 0
     relevant_superpixels = torch.unique(overlap).int().tolist()[1:]
     for superpixel in relevant_superpixels:
         temp = overlap.clone()
@@ -37,8 +55,9 @@ def create_superpixel_mask(initial_mask, image, threshold = 0.50, class_indx=1, 
     base_mask = base_mask * class_indx
     return base_mask.type(torch.IntTensor)
 
+
 def visualize_superpixels(boundaries, **images):
-    """Helper function to plot images in one row 
+    """Helper function to plot images in one row
     with the superpixels on top of them
 
     Args:
@@ -54,24 +73,29 @@ def visualize_superpixels(boundaries, **images):
         plt.imshow(mark_boundaries(image, boundaries))
     plt.show()
 
-def export_superpixel_crf_masks_for_dataset(dataset, export_path, N_SEGMENTS=200, THRESHOLD=0.60):
-        images = dataset.X
-        masks = dataset.Y
-        for i, _ in tqdm(enumerate(images)):
-            # load image
-            img = torch.tensor(imread(_))
-            # load mask
-            if ".tif" in masks[i]:
-                mask = torch.tensor(imread(masks[i])).long()
-            elif ".png" in masks[i]:
-                mask = torch.Tensor(np.array(Image.open(masks[i]))).long()
-                mask[mask>0] = 1    
-                sp_mask = create_superpixel_mask(mask, img, N_SEGMENTS=N_SEGMENTS, threshold=THRESHOLD)
-                img, sp_mask = img, sp_mask
-                pseudomask = process_batch_crf(img, sp_mask)
-                pseudomask = pass_pseudomask_or_ground_truth(mask, pseudomask)
-                pseudomask = Image.fromarray(np.uint8(pseudomask * 255) , 'L')
-                output_path_mask = (
-                export_path + "/" + _.split('/')[-1]
-                ).replace("tif", "png")
-                pseudomask.save(output_path_mask, quality=100, subsampling=0)
+
+def export_superpixel_crf_masks_for_dataset(
+    dataset, export_path, N_SEGMENTS=200, THRESHOLD=0.60
+):
+    images = dataset.X
+    masks = dataset.Y
+    for i, _ in tqdm(enumerate(images)):
+        # load image
+        img = torch.tensor(imread(_))
+        # load mask
+        if ".tif" in masks[i]:
+            mask = torch.tensor(imread(masks[i])).long()
+        elif ".png" in masks[i]:
+            mask = torch.Tensor(np.array(Image.open(masks[i]))).long()
+            mask[mask > 0] = 1
+            sp_mask = create_superpixel_mask(
+                mask, img, N_SEGMENTS=N_SEGMENTS, threshold=THRESHOLD
+            )
+            img, sp_mask = img, sp_mask
+            pseudomask = process_batch_crf(img, sp_mask)
+            pseudomask = pass_pseudomask_or_ground_truth(mask, pseudomask)
+            pseudomask = Image.fromarray(np.uint8(pseudomask * 255), "L")
+            output_path_mask = (export_path + "/" + _.split("/")[-1]).replace(
+                "tif", "png"
+            )
+            pseudomask.save(output_path_mask, quality=100, subsampling=0)

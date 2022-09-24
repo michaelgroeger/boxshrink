@@ -18,11 +18,13 @@ from label_colors import label_colors
 from scripts.tools import visualize
 from scripts.tools import decode_segmap
 from scripts.tools import get_classes_from_mask
+
 #############################################################################################################################
 # This is a collection of scripts we wrote for our first experiments on PascalVOC.                                          #
-# We later needed to switch the datasets because we were lacking the resources for a dataset of the size of PascalVOC.      # 
+# We later needed to switch the datasets because we were lacking the resources for a dataset of the size of PascalVOC.      #
 # We still publish it here since some people might find them useful and we uses some of the scripts in the Boxshrink paper. #
 #############################################################################################################################
+
 
 def get_value_of_tag(filepath, tag):
     """Check for file if condition is fullfilled
@@ -47,7 +49,7 @@ def get_value_of_tag(filepath, tag):
 
 # Function to get only segmented, only unsegmented or all images -> Create dataset
 def create_dataset(xml_files, tag, condition):
-    """Creates a dataset based on a tag and a condition of that tag. Can be used to train on subsets of the 
+    """Creates a dataset based on a tag and a condition of that tag. Can be used to train on subsets of the
     PascalVOC dataset.
 
     Args:
@@ -156,7 +158,7 @@ def export_dataset(dataset, output_path):
 
 
 def import_dataset(input_path):
-    """Import dataset create with export dataset function. 
+    """Import dataset create with export dataset function.
 
     Args:
         input_path (string)
@@ -268,7 +270,7 @@ def generate_mask_from_box(
     category_data,
     output_path,
 ):
-    """Generate weak segmentation masks from dataset. 
+    """Generate weak segmentation masks from dataset.
 
     Args:
         dataset (List): holding paths to images
@@ -384,7 +386,7 @@ def get_smallest_imagesize_in_folder(path_to_folder):
 def drop_color_in_image(
     path,
     output_path,
-    color_code=[224, 224, 192],    
+    color_code=[224, 224, 192],
 ):
     """sets pixels of a certain value to zero
 
@@ -407,13 +409,14 @@ def drop_color_in_image(
     new_img = Image.fromarray(img_np)
     path = os.path.join(output_path, img_name)
     new_img.save(path, quality=100, subsampling=0)
-    
+
+
 def export_visualize(path, **images):
     """Plots image e.g. img, img+ground truth, img+prediction in one line
-    and exports it. 
+    and exports it.
 
     Args:
-        path (string): where to save the image 
+        path (string): where to save the image
     """
     n = len(images)
     plt.figure(figsize=(16, 5))
@@ -450,7 +453,9 @@ def IoU(image, gt, model, eps=0.0000000001, mode="mean"):
             # Unfold the images and calculate prediction for each of them
             for i in range(batchsize):
                 current_gt = gt[i, :, :]
-                current_pred = torch.argmax(model(image[i, :, :].unsqueeze(0)), dim=1, keepdim=True)[: , -1, :, :]
+                current_pred = torch.argmax(
+                    model(image[i, :, :].unsqueeze(0)), dim=1, keepdim=True
+                )[:, -1, :, :]
                 intersection = torch.logical_and(current_gt, current_pred) + eps
                 union = torch.logical_or(current_gt, current_pred) + eps
                 iou_score = torch.sum(intersection) / torch.sum(union)
@@ -463,7 +468,7 @@ def IoU(image, gt, model, eps=0.0000000001, mode="mean"):
                 return None
         else:
             # Calculate IoU for batchsize = 1
-            pred = torch.argmax(model(image), dim=1, keepdim=True)[: , -1, :, :]
+            pred = torch.argmax(model(image), dim=1, keepdim=True)[:, -1, :, :]
             intersection = torch.logical_and(gt, pred) + eps
             union = torch.logical_or(gt, pred) + eps
             iou_score = torch.sum(intersection) / torch.sum(union)
