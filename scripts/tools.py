@@ -1,13 +1,15 @@
 #############################################################################################################################
 #                                                   Helper functions                                                        #
 #############################################################################################################################
-import numpy as np
 import os
+import re
+
+import matplotlib.pyplot as plt
+import numpy as np
 import torch
 from PIL import Image
-import matplotlib.pyplot as plt
 from torchvision.transforms import ToPILImage
-import re
+
 
 # Function to return all files with a certain ending
 def return_files_in_directory(path, ending):

@@ -1,13 +1,11 @@
-from skimage.segmentation import slic
-from skimage.segmentation import mark_boundaries
-import torch
-from crf import pass_pseudomask_or_ground_truth
-from tifffile import imread
 import matplotlib.pyplot as plt
-from PIL import Image
-from tqdm import tqdm
-from crf import process_batch_crf
 import numpy as np
+import torch
+from crf import pass_pseudomask_or_ground_truth, process_batch_crf
+from PIL import Image
+from skimage.segmentation import mark_boundaries, slic
+from tifffile import imread
+from tqdm import tqdm
 
 
 def create_superpixel_mask(

@@ -1,10 +1,10 @@
-from torch.utils.data import Dataset
-import torchvision.transforms as transforms
-from torchvision.transforms import ToTensor
-import torch
 import numpy as np
-from tifffile import imread
+import torch
+import torchvision.transforms as transforms
 from PIL import Image
+from tifffile import imread
+from torch.utils.data import Dataset
+from torchvision.transforms import ToTensor
 
 img_transform = transforms.Compose(
     [

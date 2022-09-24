@@ -1,13 +1,13 @@
 import cv2
-from torchmetrics import JaccardIndex
-import pydensecrf.densecrf as dcrf
-from pydensecrf.utils import unary_from_softmax
 import numpy as np
+import pydensecrf.densecrf as dcrf
 import torch
-from tqdm import tqdm
-from PIL import Image
 from config import CLASSES, IOU_THRESHOLD, MASK_OCCUPANCY_THRESHOLD
+from PIL import Image
+from pydensecrf.utils import unary_from_softmax
 from tifffile import imread
+from torchmetrics import JaccardIndex
+from tqdm import tqdm
 
 jaccard_crf = JaccardIndex(num_classes=len(CLASSES), average="None", ignore_index=0)
 

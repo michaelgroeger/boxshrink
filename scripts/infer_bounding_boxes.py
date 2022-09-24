@@ -2,8 +2,8 @@ import numpy as np
 import torch
 from PIL import Image
 from tools import return_files_in_directory
-from tqdm import tqdm
 from torchvision.transforms import ToTensor
+from tqdm import tqdm
 
 
 def span_columns(max_x, max_y):

@@ -1,17 +1,15 @@
-import torch
-from infer_bounding_boxes import get_bbox_coordinates_one_box
-from config import DEVICE
-from skimage.segmentation import slic
-from tqdm import tqdm
-from config import MASK_OCCUPANCY_THRESHOLD, DEVICE, IOU_THRESHOLD, N_SEGMENTS
-from crf import crf, pass_pseudomask_or_ground_truth
-from tools import visualize
-from tools import flatten
-from tifffile import imread
-import numpy as np
-from PIL import Image
-from dataset import img_transform
 import matplotlib.pyplot as plt
+import numpy as np
+import torch
+from config import DEVICE, IOU_THRESHOLD, MASK_OCCUPANCY_THRESHOLD, N_SEGMENTS
+from crf import crf, pass_pseudomask_or_ground_truth
+from dataset import img_transform
+from infer_bounding_boxes import get_bbox_coordinates_one_box
+from PIL import Image
+from skimage.segmentation import slic
+from tifffile import imread
+from tools import flatten, visualize
+from tqdm import tqdm
 
 
 class ResnetFeatureExtractor(torch.nn.Module):
@@ -28,8 +26,15 @@ def get_cosine_sim_score(feat_1, feat_2, cosine_fct=torch.nn.CosineSimilarity(di
     return torch.sum(cosine_fct(feat_1.squeeze(), feat_2.squeeze()))
 
 
+def get_bbox_coordinates_one_box(tensor):
+    all_x, all_y = (tensor.squeeze() == 1).nonzero(as_tuple=True)
+    smallest_x, smallest_y = torch.min(all_x).item(), torch.min(all_y).item()
+    largest_x, largest_y = torch.max(all_x).item(), torch.max(all_y).item()
+    return (smallest_y, smallest_x), (largest_y, largest_x)
+
+
 def get_foreground_background_embeddings(
-    initial_mask,
+    argmax_prediction_per_class,
     org_img,
     train_input,
     threshold,
@@ -52,8 +57,10 @@ def get_foreground_background_embeddings(
             start_label=start_label,
         )
     )
-    hadamard = all_superpixels_mask.to(device) * initial_mask.to(device)
+    hadamard = all_superpixels_mask.to(device) * argmax_prediction_per_class.to(device)
     overlap = (hadamard / class_indx).type(torch.IntTensor)
+    # Instantiate base mask
+    base_mask = torch.zeros(overlap.shape)
     # Get numbers to list, start from second element because first is 0
     relevant_superpixels = torch.unique(overlap).int().tolist()[1:]
     relevant_superpixels_thresholded = []
@@ -82,8 +89,11 @@ def get_foreground_background_embeddings(
         all_superpixels_mask_tmp[all_superpixels_mask_tmp != superpixel] = 0
         all_superpixels_mask_tmp[all_superpixels_mask_tmp > 0] = 1
         s, l = get_bbox_coordinates_one_box(all_superpixels_mask_tmp)
-        base = torch.Tensor(org_img).permute(2, 0, 1).clone().cpu() / 255
+        base = (
+            torch.Tensor(org_img).permute(2, 0, 1).clone().cpu() / 255
+        )  # train_input.clone().cpu()
         base_aspm = base.clone()
+
         base_aspm[0, :, :] = base_aspm[0, :, :] * all_superpixels_mask_tmp
         base_aspm[1, :, :] = base_aspm[1, :, :] * all_superpixels_mask_tmp
         base_aspm[2, :, :] = base_aspm[2, :, :] * all_superpixels_mask_tmp

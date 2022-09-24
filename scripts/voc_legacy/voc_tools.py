@@ -1,23 +1,22 @@
-from bs4 import BeautifulSoup
 import os
-import xml.etree.ElementTree as ET
-from tqdm import tqdm
-import pandas as pd
-import numpy as np
-from PIL import Image
-import re
-from sklearn.model_selection import train_test_split
-from os.path import isfile, join
-import torch
 import random
+import re
 import shutil
-import matplotlib.pyplot as plt
-from torchvision.transforms import ToPILImage
-from label_colors import label_colors
+import xml.etree.ElementTree as ET
+from os.path import isfile, join
 
-from scripts.tools import visualize
-from scripts.tools import decode_segmap
-from scripts.tools import get_classes_from_mask
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+import torch
+from bs4 import BeautifulSoup
+from label_colors import label_colors
+from PIL import Image
+from sklearn.model_selection import train_test_split
+from torchvision.transforms import ToPILImage
+from tqdm import tqdm
+
+from scripts.tools import decode_segmap, get_classes_from_mask, visualize
 
 #############################################################################################################################
 # This is a collection of scripts we wrote for our first experiments on PascalVOC.                                          #

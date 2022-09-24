@@ -1,6 +1,4 @@
-from scripts import tools
-from scripts import voc_legacy
-
+from scripts import tools, voc_legacy
 from scripts.tools import (
     decode_segmap,
     flatten,
@@ -67,10 +65,7 @@ __all__ = [
     "voc_tools",
 ]
 
-from scripts import infer_bounding_boxes
-from scripts import tools
-from scripts import voc_legacy
-
+from scripts import infer_bounding_boxes, tools, voc_legacy
 from scripts.infer_bounding_boxes import (
     generate_mask_from_box_colonoscopy,
     get_bbox_coordinates,
@@ -156,13 +151,14 @@ __all__ = [
     "voc_tools",
 ]
 
-from boxshrink.scripts import crf
-from boxshrink.scripts import dataset
-from boxshrink.scripts import infer_bounding_boxes
-from boxshrink.scripts import superpixels
-from boxshrink.scripts import tools
-from boxshrink.scripts import voc_legacy
-
+from boxshrink.scripts import (
+    crf,
+    dataset,
+    infer_bounding_boxes,
+    superpixels,
+    tools,
+    voc_legacy,
+)
 from boxshrink.scripts.crf import (
     crf,
     export_crf_masks_for_train_data,
@@ -170,10 +166,7 @@ from boxshrink.scripts.crf import (
     pass_pseudomask_or_ground_truth,
     process_batch_crf,
 )
-from boxshrink.scripts.dataset import (
-    Colonoscopy_Dataset,
-    img_transform,
-)
+from boxshrink.scripts.dataset import Colonoscopy_Dataset, img_transform
 from boxshrink.scripts.infer_bounding_boxes import (
     generate_mask_from_box_colonoscopy,
     get_bbox_coordinates,
@@ -274,13 +267,14 @@ __all__ = [
     "voc_tools",
 ]
 
-from boxshrink.scripts import crf
-from boxshrink.scripts import dataset
-from boxshrink.scripts import infer_bounding_boxes
-from boxshrink.scripts import superpixels
-from boxshrink.scripts import tools
-from boxshrink.scripts import voc_legacy
-
+from boxshrink.scripts import (
+    crf,
+    dataset,
+    infer_bounding_boxes,
+    superpixels,
+    tools,
+    voc_legacy,
+)
 from boxshrink.scripts.crf import (
     crf,
     export_crf_masks_for_train_data,
@@ -288,10 +282,7 @@ from boxshrink.scripts.crf import (
     pass_pseudomask_or_ground_truth,
     process_batch_crf,
 )
-from boxshrink.scripts.dataset import (
-    Colonoscopy_Dataset,
-    img_transform,
-)
+from boxshrink.scripts.dataset import Colonoscopy_Dataset, img_transform
 from boxshrink.scripts.infer_bounding_boxes import (
     generate_mask_from_box_colonoscopy,
     get_bbox_coordinates,
@@ -400,14 +391,15 @@ __all__ = [
     "voc_tools",
 ]
 
-from boxshrink.scripts import config
-from boxshrink.scripts import crf
-from boxshrink.scripts import dataset
-from boxshrink.scripts import infer_bounding_boxes
-from boxshrink.scripts import superpixels
-from boxshrink.scripts import tools
-from boxshrink.scripts import voc_legacy
-
+from boxshrink.scripts import (
+    config,
+    crf,
+    dataset,
+    infer_bounding_boxes,
+    superpixels,
+    tools,
+    voc_legacy,
+)
 from boxshrink.scripts.crf import (
     crf,
     export_crf_masks_for_train_data,
@@ -415,10 +407,7 @@ from boxshrink.scripts.crf import (
     pass_pseudomask_or_ground_truth,
     process_batch_crf,
 )
-from boxshrink.scripts.dataset import (
-    Colonoscopy_Dataset,
-    img_transform,
-)
+from boxshrink.scripts.dataset import Colonoscopy_Dataset, img_transform
 from boxshrink.scripts.infer_bounding_boxes import (
     generate_mask_from_box_colonoscopy,
     get_bbox_coordinates,
@@ -524,14 +513,15 @@ __all__ = [
     "voc_tools",
 ]
 
-from boxshrink.scripts import config
-from boxshrink.scripts import crf
-from boxshrink.scripts import dataset
-from boxshrink.scripts import infer_bounding_boxes
-from boxshrink.scripts import superpixels
-from boxshrink.scripts import tools
-from boxshrink.scripts import voc_legacy
-
+from boxshrink.scripts import (
+    config,
+    crf,
+    dataset,
+    infer_bounding_boxes,
+    superpixels,
+    tools,
+    voc_legacy,
+)
 from boxshrink.scripts.config import (
     ACTIVATION,
     BASE_DIR,
@@ -573,10 +563,7 @@ from boxshrink.scripts.crf import (
     pass_pseudomask_or_ground_truth,
     process_batch_crf,
 )
-from boxshrink.scripts.dataset import (
-    Colonoscopy_Dataset,
-    img_transform,
-)
+from boxshrink.scripts.dataset import Colonoscopy_Dataset, img_transform
 from boxshrink.scripts.infer_bounding_boxes import (
     generate_mask_from_box_colonoscopy,
     get_bbox_coordinates,
@@ -714,15 +701,16 @@ __all__ = [
     "voc_tools",
 ]
 
-from boxshrink.scripts import config
-from boxshrink.scripts import crf
-from boxshrink.scripts import dataset
-from boxshrink.scripts import embeddings
-from boxshrink.scripts import infer_bounding_boxes
-from boxshrink.scripts import superpixels
-from boxshrink.scripts import tools
-from boxshrink.scripts import voc_legacy
-
+from boxshrink.scripts import (
+    config,
+    crf,
+    dataset,
+    embeddings,
+    infer_bounding_boxes,
+    superpixels,
+    tools,
+    voc_legacy,
+)
 from boxshrink.scripts.config import (
     ACTIVATION,
     BASE_DIR,
@@ -764,10 +752,7 @@ from boxshrink.scripts.crf import (
     pass_pseudomask_or_ground_truth,
     process_batch_crf,
 )
-from boxshrink.scripts.dataset import (
-    Colonoscopy_Dataset,
-    img_transform,
-)
+from boxshrink.scripts.dataset import Colonoscopy_Dataset, img_transform
 from boxshrink.scripts.embeddings import (
     ResnetFeatureExtractor,
     get_cosine_sim_score,
@@ -914,15 +899,16 @@ __all__ = [
     "voc_tools",
 ]
 
-from boxshrink.scripts import config
-from boxshrink.scripts import crf
-from boxshrink.scripts import dataset
-from boxshrink.scripts import embeddings
-from boxshrink.scripts import infer_bounding_boxes
-from boxshrink.scripts import superpixels
-from boxshrink.scripts import tools
-from boxshrink.scripts import voc_legacy
-
+from boxshrink.scripts import (
+    config,
+    crf,
+    dataset,
+    embeddings,
+    infer_bounding_boxes,
+    superpixels,
+    tools,
+    voc_legacy,
+)
 from boxshrink.scripts.config import (
     ACTIVATION,
     BASE_DIR,
@@ -964,10 +950,7 @@ from boxshrink.scripts.crf import (
     pass_pseudomask_or_ground_truth,
     process_batch_crf,
 )
-from boxshrink.scripts.dataset import (
-    Colonoscopy_Dataset,
-    img_transform,
-)
+from boxshrink.scripts.dataset import Colonoscopy_Dataset, img_transform
 from boxshrink.scripts.embeddings import (
     ResnetFeatureExtractor,
     get_cosine_sim_score,
@@ -1116,15 +1099,16 @@ __all__ = [
     "voc_tools",
 ]
 
-from boxshrink.scripts import config
-from boxshrink.scripts import crf
-from boxshrink.scripts import dataset
-from boxshrink.scripts import embeddings
-from boxshrink.scripts import infer_bounding_boxes
-from boxshrink.scripts import superpixels
-from boxshrink.scripts import tools
-from boxshrink.scripts import voc_legacy
-
+from boxshrink.scripts import (
+    config,
+    crf,
+    dataset,
+    embeddings,
+    infer_bounding_boxes,
+    superpixels,
+    tools,
+    voc_legacy,
+)
 from boxshrink.scripts.config import (
     ACTIVATION,
     BASE_DIR,
@@ -1166,10 +1150,7 @@ from boxshrink.scripts.crf import (
     pass_pseudomask_or_ground_truth,
     process_batch_crf,
 )
-from boxshrink.scripts.dataset import (
-    Colonoscopy_Dataset,
-    img_transform,
-)
+from boxshrink.scripts.dataset import Colonoscopy_Dataset, img_transform
 from boxshrink.scripts.embeddings import (
     ResnetFeatureExtractor,
     assign_foreground_sp,

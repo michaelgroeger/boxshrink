@@ -1,9 +1,5 @@
-from voc_legacy import label_colors
-from voc_legacy import voc_tools
-
-from voc_legacy.label_colors import (
-    label_colors,
-)
+from voc_legacy import label_colors, voc_tools
+from voc_legacy.label_colors import label_colors
 from voc_legacy.voc_tools import (
     IoU,
     check_box_coordinates,
@@ -50,12 +46,8 @@ __all__ = [
     "voc_tools",
 ]
 
-from boxshrink.scripts.voc_legacy import label_colors
-from boxshrink.scripts.voc_legacy import voc_tools
-
-from boxshrink.scripts.voc_legacy.label_colors import (
-    label_colors,
-)
+from boxshrink.scripts.voc_legacy import label_colors, voc_tools
+from boxshrink.scripts.voc_legacy.label_colors import label_colors
 from boxshrink.scripts.voc_legacy.voc_tools import (
     IoU,
     check_box_coordinates,

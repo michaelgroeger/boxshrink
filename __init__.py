@@ -1,5 +1,4 @@
 from boxshrink import scripts
-
 from boxshrink.scripts import (
     IoU,
     check_box_coordinates,
@@ -86,7 +85,6 @@ __all__ = [
 ]
 
 from boxshrink import scripts
-
 from boxshrink.scripts import (
     Colonoscopy_Dataset,
     IoU,
@@ -201,7 +199,6 @@ __all__ = [
 ]
 
 from boxshrink import scripts
-
 from boxshrink.scripts import (
     ACTIVATION,
     BASE_DIR,
@@ -209,7 +206,6 @@ from boxshrink.scripts import (
     BEST_MODEL_DIR,
     CHECKPOINT_MODEL_DIR,
     CLASSES,
-    Colonoscopy_Dataset,
     DATA_DIR,
     DECODER,
     DEVICE,
@@ -220,7 +216,6 @@ from boxshrink.scripts import (
     EXPORT_CSV_DIR,
     GAMMA,
     IOU_THRESHOLD,
-    IoU,
     LEARNING_RATE,
     LEARNING_RATE_SCHEDULING,
     LOSS,
@@ -231,13 +226,15 @@ from boxshrink.scripts import (
     PER_X_BATCH,
     PER_X_EPOCH,
     PER_X_EPOCH_PLOT,
-    ResnetFeatureExtractor,
     SCHEDULE_TYPE,
     START_EPOCH,
     STATE,
     STEP_SIZE,
     TRAINING_INPUT,
     WEIGHT_DECAY,
+    Colonoscopy_Dataset,
+    IoU,
+    ResnetFeatureExtractor,
     alphanum_key,
     check_box_coordinates,
     config,
