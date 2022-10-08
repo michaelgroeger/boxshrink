@@ -133,3 +133,5 @@ dmypy.json
 /data/testing/robust_boxshrink/
 /data/testing/mean_embeddings
 /data/colonoscopy
+
+.DS_Store
