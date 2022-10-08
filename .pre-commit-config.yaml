@@ -24,6 +24,10 @@ repos:
     hooks:
     -   id: isort
         args: ["--profile", "black"]
+-   repo: https://github.com/PyCQA/autoflake
+    rev: v1.6.1
+    hooks:
+    -   id: autoflake
 -   repo: local
     hooks:
     -   id: flake8

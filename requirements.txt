@@ -1,4 +1,3 @@
-
 alembic==1.8.1
 appnope @ file:///opt/concourse/worker/volumes/live/5f13e5b3-5355-4541-5fc3-f08850c73cf9/volume/appnope_1606859448618/work
 asttokens @ file:///opt/conda/conda-bld/asttokens_1646925590279/work
@@ -75,7 +74,6 @@ pytz==2022.2.1
 PyWavelets==1.3.0
 PyYAML==6.0
 pyzmq @ file:///private/var/folders/sy/f16zz6x50xz3113nwtb9bvq00000gp/T/abs_15f7a459-ad98-422b-b8da-cbf1f626e2115nt0ocwy/croots/recipe/pyzmq_1657724193704/work
-querystring-parser==1.2.4
 requests==2.28.1
 scikit-image==0.19.3
 scipy==1.9.1
