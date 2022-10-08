@@ -8,6 +8,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import torch
 from PIL import Image
+from pytorch_grad_cam.utils.image import show_cam_on_image
 from torchvision.transforms import ToPILImage
 
 
@@ -209,3 +210,9 @@ def human_sort(l):
     Sort a list in the way that humans expect.
     """
     l.sort(key=alphanum_key)
+
+
+def overlay_mask_on_image(org_image, cam):
+    rgb_img = np.float32(org_image) / 255
+    cam_rgb = show_cam_on_image(rgb_img, cam, use_rgb=True)
+    return cam_rgb

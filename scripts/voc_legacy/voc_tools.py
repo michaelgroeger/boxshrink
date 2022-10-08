@@ -10,13 +10,9 @@ import numpy as np
 import pandas as pd
 import torch
 from bs4 import BeautifulSoup
-from label_colors import label_colors
 from PIL import Image
 from sklearn.model_selection import train_test_split
-from torchvision.transforms import ToPILImage
 from tqdm import tqdm
-
-from scripts.tools import decode_segmap, get_classes_from_mask, visualize
 
 #############################################################################################################################
 # This is a collection of scripts we wrote for our first experiments on PascalVOC.                                          #
@@ -448,7 +444,7 @@ def IoU(image, gt, model, eps=0.0000000001, mode="mean"):
     ious = []
     with torch.no_grad():
         if gt.shape[0] > 1:
-            batch_mean_iou = 0
+            pass
             # Unfold the images and calculate prediction for each of them
             for i in range(batchsize):
                 current_gt = gt[i, :, :]

@@ -2,14 +2,14 @@ import cv2
 import numpy as np
 import pydensecrf.densecrf as dcrf
 import torch
-from config import CLASSES, IOU_THRESHOLD, MASK_OCCUPANCY_THRESHOLD
-from PIL import Image
 from pydensecrf.utils import unary_from_softmax
-from tifffile import imread
 from torchmetrics import JaccardIndex
-from tqdm import tqdm
 
-jaccard_crf = JaccardIndex(num_classes=len(CLASSES), average="None", ignore_index=0)
+from scripts.config import CLASSES, DEVICE, IOU_THRESHOLD, MASK_OCCUPANCY_THRESHOLD
+
+jaccard_crf = JaccardIndex(num_classes=len(CLASSES), average="none", ignore_index=0).to(
+    DEVICE
+)
 
 
 def crf(img_org, mask, pb_sxy=(25, 25), pb_srgb=(10, 10, 10), pg_sxy=(5, 5)):
@@ -27,7 +27,7 @@ def crf(img_org, mask, pb_sxy=(25, 25), pb_srgb=(10, 10, 10), pg_sxy=(5, 5)):
     im_softmax = np.concatenate([not_mask, mask_np_processed], axis=2)
     im_softmax = im_softmax / 255.0
 
-    gauss_img = cv2.GaussianBlur(img_np, (31, 31), 0)
+    cv2.GaussianBlur(img_np, (31, 31), 0)
 
     bilat_img = cv2.bilateralFilter(img_np, d=10, sigmaColor=80, sigmaSpace=80)
 
@@ -62,15 +62,15 @@ def crf(img_org, mask, pb_sxy=(25, 25), pb_srgb=(10, 10, 10), pg_sxy=(5, 5)):
     return torch.from_numpy(res).type(torch.IntTensor)
 
 
-def process_batch_crf(img_org, mask):
+def process_batch_crf(img_org, mask, device=DEVICE):
     if img_org.dim() > 3:
-        batch = torch.zeros(mask.shape, dtype=torch.int64)
+        batch = torch.zeros(mask.shape, dtype=torch.int64).to(device)
         for i in range(len(img_org)):
-            pseudomask = crf(img_org[i], mask[i])
+            pseudomask = crf(img_org[i], mask[i]).to(device)
             batch[i, :, :] = pseudomask
         return batch
     else:
-        return crf(img_org, mask)
+        return crf(img_org, mask).to(device)
 
 
 def pass_pseudomask_or_ground_truth(
@@ -78,10 +78,11 @@ def pass_pseudomask_or_ground_truth(
     pseudomasks,
     iou_threshold=IOU_THRESHOLD,
     mask_occupancy_threshold=MASK_OCCUPANCY_THRESHOLD,
+    device=DEVICE,
     IoU=jaccard_crf,
 ):
     if masks.dim() > 2:
-        batch = torch.zeros(masks.shape, dtype=torch.float32)
+        batch = torch.zeros(masks.shape, dtype=torch.float32).to(device)
         pseudomasks_count = 0
         for i in range(masks.shape[0]):
             total_mask_occupancy = torch.count_nonzero(masks[i]) / (
@@ -108,23 +109,3 @@ def pass_pseudomask_or_ground_truth(
             return masks
         else:
             return pseudomasks
-
-
-def export_crf_masks_for_train_data(dataset, export_path):
-    images = dataset.X
-    masks = dataset.Y
-    for i, _ in tqdm(enumerate(images)):
-        # load image
-        img = torch.tensor(imread(_))
-        # load mask
-        if ".tif" in masks[i]:
-            mask = torch.tensor(imread(masks[i])).long()
-        elif ".png" in masks[i]:
-            mask = torch.Tensor(np.array(Image.open(masks[i]))).long()
-        mask[mask > 0] = 1
-        img, mask = img, mask
-        pseudomask = process_batch_crf(img, mask)
-        pseudomask = pass_pseudomask_or_ground_truth(mask, pseudomask)
-        pseudomask = Image.fromarray(np.uint8(pseudomask.cpu().detach() * 255), "L")
-        output_path_mask = (export_path + "/" + _.split("/")[-1]).replace("tif", "png")
-        pseudomask.save(output_path_mask, quality=100, subsampling=0)

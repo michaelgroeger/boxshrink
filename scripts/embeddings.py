@@ -1,15 +1,13 @@
-import matplotlib.pyplot as plt
 import numpy as np
 import torch
-from config import DEVICE, IOU_THRESHOLD, MASK_OCCUPANCY_THRESHOLD, N_SEGMENTS
-from crf import crf, pass_pseudomask_or_ground_truth
-from dataset import img_transform
-from infer_bounding_boxes import get_bbox_coordinates_one_box
 from PIL import Image
 from skimage.segmentation import slic
-from tifffile import imread
-from tools import flatten, visualize
+from torch.utils.data import DataLoader
 from tqdm import tqdm
+
+from scripts.config import DEVICE
+from scripts.crf import crf, pass_pseudomask_or_ground_truth
+from scripts.infer_bounding_boxes import get_bbox_coordinates_one_box
 
 
 class ResnetFeatureExtractor(torch.nn.Module):
@@ -60,7 +58,7 @@ def get_foreground_background_embeddings(
     hadamard = all_superpixels_mask.to(device) * argmax_prediction_per_class.to(device)
     overlap = (hadamard / class_indx).type(torch.IntTensor)
     # Instantiate base mask
-    base_mask = torch.zeros(overlap.shape)
+    torch.zeros(overlap.shape)
     # Get numbers to list, start from second element because first is 0
     relevant_superpixels = torch.unique(overlap).int().tolist()[1:]
     relevant_superpixels_thresholded = []
@@ -131,6 +129,7 @@ def get_mean_embeddings(
     get_foreground_background_embeddings=get_foreground_background_embeddings,
     N_SEGMENTS=250,
     THRESHOLD=0.1,
+    device=DEVICE,
 ):
     foreground_embeddings = torch.zeros([len(data_loader.dataset), 2048])
     background_embeddings = torch.zeros([len(data_loader.dataset), 2048])
@@ -142,9 +141,9 @@ def get_mean_embeddings(
                 batch += 1
                 tepoch.set_description(f"Epoch {epoch}")
                 train_inputs, train_labels, train_org_images = (
-                    train_inputs.to(DEVICE),
-                    train_labels.to(DEVICE),
-                    train_org_images.to(DEVICE),
+                    train_inputs.to(device),
+                    train_labels.to(device),
+                    train_org_images.to(device),
                 )
                 for i in range(0, train_inputs.shape[0], 1):
                     embed_f, embed_b, _, _ = get_foreground_background_embeddings(
@@ -184,38 +183,41 @@ def assign_foreground_sp(
     return close_f_foreground_embeddings
 
 
-def scan_outer_boundary(superpixel_mask, flatten_list_fct=flatten):
-    # We will collect those superpixels which are on the outer boundary so they
-    # have a zero neighbour.
-    superpixel_mask_refined = superpixel_mask.clone()
-    outer_superpixel_rows, outer_superpixel_cols, outer_all = [], [], []
-    tuples = torch.nonzero(superpixel_mask_refined)
-    rows = torch.unique(tuples[:, 0])
-    columns = torch.unique(tuples[:, 1])
-    # scan over rows
-    for i in rows:
-        current_row = superpixel_mask_refined[i, :]
-        unique_non_zeroed_row = torch.unique(
-            current_row[current_row.nonzero(as_tuple=True)], sorted=False
-        )
-        first_superpixel = unique_non_zeroed_row[-1]
-        last_superpixel = unique_non_zeroed_row[0]
-        outer_superpixel_rows.append(first_superpixel.item())
-        outer_superpixel_rows.append(last_superpixel.item())
-    # scan over columns
-    for i in columns:
-        current_column = superpixel_mask_refined[:, i]
-        unique_non_zeroed_column = torch.unique(
-            current_column[current_column.nonzero(as_tuple=True)], sorted=False
-        )
-        first_superpixel = unique_non_zeroed_column[-1]
-        last_superpixel = unique_non_zeroed_column[0]
-        outer_superpixel_cols.append(first_superpixel.item())
-        outer_superpixel_cols.append(last_superpixel.item())
-    outer_all.append(outer_superpixel_cols)
-    outer_all.append(outer_superpixel_rows)
-    outer_all = flatten(outer_all)
-    return list(set(outer_all))
+def get_first_last(indices, placements):
+    unique_indices = torch.unique(indices)
+    first_last_per_index = {}
+    for i in unique_indices:
+        # get corresponding index in indices
+        placement = placements[(indices == i).nonzero(as_tuple=True)[0]]
+        first, last = placement[0], placement[-1]
+        first_last_per_index[i.item()] = list(set([first.item(), last.item()]))
+    return first_last_per_index
+
+
+def lookup_values(first_last_per_index, tensor, mode):
+    keys = list(first_last_per_index.keys())
+    values = []
+    assert mode in ["rows", "cols"], "Please provide mode one of 'rows', 'cols'"
+    if mode == "rows":
+        for key in keys:
+            for i in tensor[key, first_last_per_index[key]].tolist():
+                values.append(int(i))
+    elif mode == "cols":
+        for key in keys:
+            for i in tensor[first_last_per_index[key], key].tolist():
+                values.append(int(i))
+    return values
+
+
+def get_relevant_values(values_rows, values_cols):
+    return list(set(values_rows + values_cols))
+
+
+def get_outer_superpixels(superpixel_mask):
+    rows, columns = superpixel_mask.nonzero(as_tuple=True)
+    res_1 = lookup_values(get_first_last(rows, columns), superpixel_mask, mode="rows")
+    res_2 = lookup_values(get_first_last(columns, rows), superpixel_mask, mode="cols")
+    return get_relevant_values(res_1, res_2)
 
 
 def create_embedding_mask(
@@ -225,19 +227,19 @@ def create_embedding_mask(
     N_SEGMENTS,
     mean_foreground_embedding,
     mean_background_embedding,
+    model,
     threshold_embedding=0,
     threshold_closeness=0,
     cosine_function=get_cosine_sim_score,
-    assign_label_based_on_closeness=assign_foreground_sp,
     get_foreground_background_embeddings_function=get_foreground_background_embeddings,
     scan_outer_pixels=True,
-    scan_outer_superpixels_function=scan_outer_boundary,
+    scan_outer_superpixels_function=get_outer_superpixels,
     postprocess_crf=True,
     iter=1,
 ):
     (
         foreground_embeddings,
-        background_embeddings,
+        _,
         relevant_superpixels,
         all_superpixels_mask,
     ) = get_foreground_background_embeddings_function(
@@ -246,6 +248,7 @@ def create_embedding_mask(
         train_input,
         N_SEGMENTS=N_SEGMENTS,
         threshold=threshold_embedding,
+        model=model,
     )
     for i in range(0, iter, 1):
         not_in_relevant_superpixels = [
@@ -258,6 +261,8 @@ def create_embedding_mask(
             embedding_mask_relevant_superpixels[
                 embedding_mask_relevant_superpixels == i
             ] = 0
+        tmp = embedding_mask_relevant_superpixels.clone()
+        tmp[tmp > 0] = 1
         if scan_outer_pixels == True:
             outer_superpixels = scan_outer_superpixels_function(
                 embedding_mask_relevant_superpixels
@@ -307,3 +312,116 @@ def create_embedding_mask(
         embedding_mask_relevant_superpixels,
         all_superpixels_mask,
     )
+
+
+def get_embedding_mask_or_box(
+    train_input,
+    train_label,
+    train_org_image,
+    model,
+    mean_foreground_embedding,
+    mean_background_embedding,
+    iou_threshold=0.1,
+    mask_occupancy_threshold=0.04,
+    n_segments=300,
+    threshold_embedding=0,
+    threshold_closeness=0,
+    iter=1,
+    device=DEVICE,
+):
+    embedding_mask, _, _, _ = create_embedding_mask(
+        train_label,
+        train_org_image,
+        train_input,
+        N_SEGMENTS=n_segments,
+        threshold_embedding=threshold_embedding,
+        iter=iter,
+        threshold_closeness=threshold_closeness,
+        model=model,
+        mean_foreground_embedding=mean_foreground_embedding,
+        mean_background_embedding=mean_background_embedding,
+    )
+    return pass_pseudomask_or_ground_truth(
+        train_label.to(device),
+        embedding_mask.to(device),
+        iou_threshold=iou_threshold,
+        mask_occupancy_threshold=mask_occupancy_threshold,
+    )
+
+
+def generate_embedding_masks_for_dataset(
+    dataset,
+    export_path,
+    model,
+    mean_foreground_embedding,
+    mean_background_embedding,
+    save_as_png=True,
+):
+    # No shuffle because we simply want to generate masks to be used in later training
+    data_loader = DataLoader(dataset, batch_size=64, shuffle=False, num_workers=0)
+    filecounter = 0
+    for epoch in range(0, 1):
+        with tqdm(
+            data_loader, unit="batch", desc="Generating Embedding Masks"
+        ) as tepoch:
+            for train_inputs, train_labels, train_org_images in tepoch:
+                for idx in range(train_labels.shape[0]):
+                    mask_name = dataset.X[filecounter]
+                    pseudomask = get_embedding_mask_or_box(
+                        train_inputs[idx],
+                        train_labels[idx],
+                        train_org_images[idx],
+                        model,
+                        mean_foreground_embedding,
+                        mean_background_embedding,
+                    )
+                    if save_as_png == True:
+                        output_path_mask = (
+                            export_path + "/" + mask_name.split("/")[-1]
+                        ).replace("tif", "png")
+                        pseudomask = Image.fromarray(
+                            np.uint8(pseudomask.cpu().detach() * 255), "L"
+                        )
+                        pseudomask.save(output_path_mask, quality=100, subsampling=0)
+                    else:
+                        output_path_mask = (
+                            export_path + "/" + mask_name.split("/")[-1]
+                        ).replace("tif", "pt")
+                        torch.save(pseudomask, output_path_mask)
+                    filecounter += 1
+
+
+def return_embedding_masks_for_dataset(
+    dataset, model, mean_foreground_embedding, mean_background_embedding
+):
+    # No shuffle because we simply want to generate masks to be used in later training
+    data_loader = DataLoader(dataset, batch_size=64, shuffle=False, num_workers=0)
+    mask_dict = {}
+    for epoch in range(0, 1):
+        with tqdm(
+            data_loader, unit="batch", desc="Generating Embedding Masks"
+        ) as tepoch:
+            for train_inputs, train_labels, train_org_images in tepoch:
+                masks = torch.zeros(
+                    [
+                        train_labels.shape[0],
+                        train_labels.shape[1],
+                        train_labels.shape[2],
+                    ],
+                    dtype=train_labels.dtype,
+                    layout=train_labels.layout,
+                    device=train_labels.device,
+                )
+                for idx in range(train_labels.shape[0]):
+                    mask_name = dataset.X[idx]
+                    pseudomask = get_embedding_mask_or_box(
+                        train_inputs[idx],
+                        train_labels[idx],
+                        train_org_images[idx],
+                        model,
+                        mean_foreground_embedding,
+                        mean_background_embedding,
+                    )
+                    masks[idx] = pseudomask
+                    mask_dict[idx] = mask_name.replace("tif", "pt").split("/")[-1]
+    return masks, mask_dict
