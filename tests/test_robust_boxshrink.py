@@ -28,11 +28,11 @@ def robust_boxshrink(data_dir, embedding_idr):
 
     dataset = Colonoscopy_Dataset(X_train[:5], y_train[:5])
     mean_f = torch.mean(
-        torch.load(embedding_idr + "foreground_embeddings_ns250_th01_sp_crf_masks.pt"),
+        torch.load(embedding_idr + "foreground_embedding.pt"),
         dim=0,
     )
     mean_b = torch.mean(
-        torch.load(embedding_idr + "background_embeddings_ns250_th01_sp_crf_masks.pt"),
+        torch.load(embedding_idr + "background_embedding.pt"),
         dim=0,
     )
     resnet = torchvision.models.resnet50(weights="ResNet50_Weights.IMAGENET1K_V2")
@@ -54,7 +54,7 @@ def load_test_masks_in_one_tensor(base_masks, files, mask_dict):
 
 def test_robust_boxshrink():
     TESTING_DIR = os.path.join(os.getcwd(), "tests/test_embedding_masks")
-    EMBEDDING_DIR = os.path.join(DATA_DIR, "testing/mean_embeddings/")
+    EMBEDDING_DIR = os.path.join(DATA_DIR, "mean_embeddings/")
     generated_masks, mask_dict = robust_boxshrink(DATA_DIR, EMBEDDING_DIR)
     test_mask_files = return_files_in_directory(TESTING_DIR, ".pt")
     test_masks = torch.zeros_like(generated_masks)
