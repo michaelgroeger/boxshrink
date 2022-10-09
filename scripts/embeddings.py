@@ -31,10 +31,45 @@ def get_bbox_coordinates_one_box(tensor):
     return (smallest_y, smallest_x), (largest_y, largest_x)
 
 
+def fill_embedding_matrix(
+    embedding_matrix,
+    base_mask,
+    all_superpixels_mask,
+    relevant_superpixels,
+    model,
+    device=DEVICE,
+):
+    for i, superpixel in enumerate(relevant_superpixels):
+        all_superpixels_mask_tmp = all_superpixels_mask.clone()
+        all_superpixels_mask_tmp[all_superpixels_mask_tmp != superpixel] = 0
+        all_superpixels_mask_tmp[all_superpixels_mask_tmp > 0] = 1
+        smallest, largest = get_bbox_coordinates_one_box(all_superpixels_mask_tmp)
+        base_all_superpixels_mask = base_mask.clone()
+        base_all_superpixels_mask[0, :, :] = (
+            base_all_superpixels_mask[0, :, :] * all_superpixels_mask_tmp
+        )
+        base_all_superpixels_mask[1, :, :] = (
+            base_all_superpixels_mask[1, :, :] * all_superpixels_mask_tmp
+        )
+        base_all_superpixels_mask[2, :, :] = (
+            base_all_superpixels_mask[2, :, :] * all_superpixels_mask_tmp
+        )
+        cut = (
+            base_all_superpixels_mask[
+                :, smallest[1] : largest[1], smallest[0] : largest[0]
+            ]
+            .unsqueeze(0)
+            .to(device)
+        )
+        with torch.no_grad():
+            superpixel_embedding = model(cut)
+            embedding_matrix[i, :] = superpixel_embedding
+    return embedding_matrix
+
+
 def get_foreground_background_embeddings(
     argmax_prediction_per_class,
     org_img,
-    train_input,
     threshold,
     model,
     n_segments=N_SEGMENTS_ROBUST,
@@ -58,7 +93,7 @@ def get_foreground_background_embeddings(
     overlap = (hadamard / class_indx).type(torch.IntTensor)
     # Get numbers to list, start from second element because first is 0
     relevant_superpixels = torch.unique(overlap).int().tolist()[1:]
-    relevant_superpixels_thresholded = []
+    foreground_superpixels = []
     for superpixel in relevant_superpixels:
         temp = overlap.clone()
         org = all_superpixels_mask.clone()
@@ -71,69 +106,35 @@ def get_foreground_background_embeddings(
         # Add superpixel as ones to base mask if share is over threshold
         if share > threshold:
             # bring org values to one
-            relevant_superpixels_thresholded.append(superpixel)
+            foreground_superpixels.append(superpixel)
     background_superpixels = [
         i.item()
         for i in torch.unique(all_superpixels_mask)
-        if i not in relevant_superpixels_thresholded
+        if i not in foreground_superpixels
     ]
-    foreground_embeddings = torch.zeros([len(relevant_superpixels_thresholded), 2048])
+    foreground_embeddings = torch.zeros([len(foreground_superpixels), 2048])
     background_embeddings = torch.zeros([len(background_superpixels), 2048])
     base = torch.Tensor(org_img).permute(2, 0, 1).clone().cpu() / 255
-    for i, superpixel in enumerate(relevant_superpixels_thresholded):
-        all_superpixels_mask_tmp = all_superpixels_mask.clone()
-        all_superpixels_mask_tmp[all_superpixels_mask_tmp != superpixel] = 0
-        all_superpixels_mask_tmp[all_superpixels_mask_tmp > 0] = 1
-        smallest, largest = get_bbox_coordinates_one_box(all_superpixels_mask_tmp)
-        base_all_superpixels_mask = base.clone()
-        base_all_superpixels_mask[0, :, :] = (
-            base_all_superpixels_mask[0, :, :] * all_superpixels_mask_tmp
-        )
-        base_all_superpixels_mask[1, :, :] = (
-            base_all_superpixels_mask[1, :, :] * all_superpixels_mask_tmp
-        )
-        base_all_superpixels_mask[2, :, :] = (
-            base_all_superpixels_mask[2, :, :] * all_superpixels_mask_tmp
-        )
-        cut = (
-            base_all_superpixels_mask[
-                :, smallest[1] : largest[1], smallest[0] : largest[0]
-            ]
-            .unsqueeze(0)
-            .to(device)
-        )
-        with torch.no_grad():
-            feat_foreground_sp = model(cut)
-            foreground_embeddings[i, :] = feat_foreground_sp
-    for i, superpixel in enumerate(background_superpixels):
-        all_superpixels_mask_tmp = all_superpixels_mask.clone()
-        all_superpixels_mask_tmp[all_superpixels_mask_tmp != superpixel] = 0
-        all_superpixels_mask_tmp[all_superpixels_mask_tmp > 0] = 1
-        smallest, largest = get_bbox_coordinates_one_box(all_superpixels_mask_tmp)
-        base_all_superpixels_mask = base.clone()
-        base_all_superpixels_mask[0, :, :] = (
-            base_all_superpixels_mask[0, :, :] * all_superpixels_mask_tmp
-        )
-        base_all_superpixels_mask[1, :, :] = (
-            base_all_superpixels_mask[1, :, :] * all_superpixels_mask_tmp
-        )
-        base_all_superpixels_mask[2, :, :] = (
-            base_all_superpixels_mask[2, :, :] * all_superpixels_mask_tmp
-        )
-        cut = (
-            base_all_superpixels_mask[
-                :, smallest[1] : largest[1], smallest[0] : largest[0]
-            ]
-            .unsqueeze(0)
-            .to(device)
-        )
-        with torch.no_grad():
-            feat_background_sp = model(cut)
-            background_embeddings[i, :] = feat_background_sp
+    foreground_embeddings = fill_embedding_matrix(
+        foreground_embeddings,
+        base,
+        all_superpixels_mask,
+        relevant_superpixels,
+        model,
+        device=DEVICE,
+    )
+    background_embeddings = fill_embedding_matrix(
+        background_embeddings,
+        base,
+        all_superpixels_mask,
+        background_superpixels,
+        model,
+        device=DEVICE,
+    )
     return (
         foreground_embeddings,
         background_embeddings,
-        relevant_superpixels_thresholded,
+        foreground_superpixels,
         all_superpixels_mask,
     )
 
@@ -165,7 +166,6 @@ def get_mean_embeddings(
                     embed_f, embed_b, _, _ = get_foreground_background_embeddings(
                         train_labels[i],
                         train_org_images[i],
-                        train_inputs[i],
                         n_segments=n_segments,
                         threshold=THRESHOLD,
                         model=model,
@@ -261,7 +261,6 @@ def create_embedding_mask(
     ) = get_foreground_background_embeddings_function(
         train_label,
         train_org_image,
-        train_input,
         n_segments=n_segments,
         threshold=threshold_embedding,
         model=model,
