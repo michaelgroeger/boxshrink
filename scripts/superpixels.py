@@ -1,13 +1,13 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
+from crf import pass_pseudomask_or_ground_truth, process_batch_crf
 from PIL import Image
 from skimage.segmentation import mark_boundaries, slic
 from tifffile import imread
 from tqdm import tqdm
 
-from scripts.config import DEVICE
-from scripts.crf import pass_pseudomask_or_ground_truth, process_batch_crf
+from config import DEVICE
 
 
 def create_superpixel_mask(

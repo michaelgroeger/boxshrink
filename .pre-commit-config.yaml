@@ -27,11 +27,3 @@ repos:
     rev: v1.6.1
     hooks:
     -   id: autoflake
--   repo: local
-    hooks:
-    -   id: flake8
-        name: flake8
-        entry: flake8
-        language: system
-        types: [ python ]
-        files: ^(app/|tests/)

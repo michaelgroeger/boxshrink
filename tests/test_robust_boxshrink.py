@@ -4,7 +4,7 @@ import torch
 import torchvision
 from sklearn.model_selection import train_test_split
 
-from scripts.config import DEVICE
+from config import DEVICE
 from scripts.dataset import Colonoscopy_Dataset
 from scripts.embeddings import (
     ResnetFeatureExtractor,
