@@ -5,7 +5,7 @@ from skimage.segmentation import slic
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 
-from config import DEVICE
+from scripts.config import DEVICE
 from scripts.crf import crf, pass_pseudomask_or_ground_truth
 from scripts.infer_bounding_boxes import get_bbox_coordinates_one_box
 

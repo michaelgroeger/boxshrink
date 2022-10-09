@@ -4,7 +4,7 @@ import torch
 import torchvision
 from sklearn.model_selection import train_test_split
 
-from config import DEVICE
+from scripts.config import DATA_DIR, DEVICE
 from scripts.dataset import Colonoscopy_Dataset
 from scripts.embeddings import (
     ResnetFeatureExtractor,
@@ -53,14 +53,12 @@ def load_test_masks_in_one_tensor(base_masks, files, mask_dict):
 
 
 def test_robust_boxshrink():
-    BASE_DIR = "/".join(os.getcwd().split("/")[:-2])
-    DATA_DIR = os.path.join(BASE_DIR, "data")
-    TESTING_DIR = os.path.join(os.getcwd(), "test_embedding_masks")
+    TESTING_DIR = os.path.join(os.getcwd(), "tests/test_embedding_masks")
     EMBEDDING_DIR = os.path.join(DATA_DIR, "testing/mean_embeddings/")
     generated_masks, mask_dict = robust_boxshrink(DATA_DIR, EMBEDDING_DIR)
     test_mask_files = return_files_in_directory(TESTING_DIR, ".pt")
     test_masks = torch.zeros_like(generated_masks)
-    load_test_masks_in_one_tensor(test_masks, test_mask_files, mask_dict)
+    test_masks = load_test_masks_in_one_tensor(test_masks, test_mask_files, mask_dict)
     assert torch.all(
         test_masks.eq(generated_masks)
     ), f"Generated embedding masks and test masks not equal"

@@ -5,7 +5,7 @@ import torch
 from pydensecrf.utils import unary_from_softmax
 from torchmetrics import JaccardIndex
 
-from config import CLASSES, DEVICE, IOU_THRESHOLD, MASK_OCCUPANCY_THRESHOLD
+from scripts.config import CLASSES, DEVICE, IOU_THRESHOLD, MASK_OCCUPANCY_THRESHOLD
 
 jaccard_crf = JaccardIndex(num_classes=len(CLASSES), average="none", ignore_index=0).to(
     DEVICE

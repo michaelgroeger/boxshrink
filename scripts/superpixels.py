@@ -7,7 +7,7 @@ from skimage.segmentation import mark_boundaries, slic
 from tifffile import imread
 from tqdm import tqdm
 
-from config import DEVICE
+from scripts.config import DEVICE
 
 
 def create_superpixel_mask(
