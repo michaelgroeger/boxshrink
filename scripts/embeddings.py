@@ -5,7 +5,15 @@ from skimage.segmentation import slic
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 
-from scripts.config import DEVICE, N_SEGMENTS_ROBUST, SLIC_COMPACTNESS
+from scripts.config import (
+    DEVICE,
+    IOU_THRESHOLD,
+    MASK_OCCUPANCY_THRESHOLD,
+    N_SEGMENTS_ROBUST,
+    SLIC_COMPACTNESS,
+    SUPERPIXEL_OVERLAP_THRESHOLD,
+    THRESHOLD_CLOSNESS,
+)
 from scripts.crf import crf, pass_pseudomask_or_ground_truth
 from scripts.infer_bounding_boxes import get_bbox_coordinates_one_box
 
@@ -70,8 +78,8 @@ def fill_embedding_matrix(
 def get_foreground_background_embeddings(
     argmax_prediction_per_class,
     org_img,
-    threshold,
     model,
+    threshold=SUPERPIXEL_OVERLAP_THRESHOLD,
     n_segments=N_SEGMENTS_ROBUST,
     class_indx=1,
     compactness=SLIC_COMPACTNESS,
@@ -145,7 +153,7 @@ def get_mean_embeddings(
     embedding_dir,
     get_foreground_background_embeddings=get_foreground_background_embeddings,
     n_segments=N_SEGMENTS_ROBUST,
-    THRESHOLD=0.1,
+    threshold=SUPERPIXEL_OVERLAP_THRESHOLD,
     device=DEVICE,
 ):
     foreground_embeddings = torch.zeros([len(data_loader.dataset), 2048])
@@ -167,7 +175,7 @@ def get_mean_embeddings(
                         train_labels[i],
                         train_org_images[i],
                         n_segments=n_segments,
-                        threshold=THRESHOLD,
+                        threshold=threshold,
                         model=model,
                     )
                     mean_f = torch.mean(embed_f, dim=0)
@@ -187,19 +195,28 @@ def assign_foreground_sp(
     mean_background_embedding,
     relevant_superpixels_thresholded,
     foreground_embeddings,
-    threshold,
+    threshold_closeness,
 ):
     close_f_foreground_embeddings = []
     for i in range(foreground_embeddings.shape[0]):
         f_cos = cosine_fct(mean_foreground_embedding, foreground_embeddings[i])
         b_cos = cosine_fct(mean_background_embedding, foreground_embeddings[i])
         diff = abs(b_cos - f_cos)
-        if (f_cos > b_cos or f_cos == b_cos) and diff <= threshold:
+        if (f_cos > b_cos or f_cos == b_cos) and diff <= threshold_closeness:
             close_f_foreground_embeddings.append(relevant_superpixels_thresholded[i])
     return close_f_foreground_embeddings
 
 
 def get_first_last(indices, placements):
+    """Returns the first and last superpixel value of one row in the superpixel mask.
+
+    Args:
+        indices (tensor): indexes in which the values are placed
+        placements (tensor): rows | cols
+
+    Returns:
+        dict: holding row | column and the index of the first and last non-zero entry
+    """
     unique_indices = torch.unique(indices)
     first_last_per_index = {}
     for i in unique_indices:
@@ -239,13 +256,12 @@ def get_outer_superpixels(superpixel_mask):
 def create_embedding_mask(
     train_label,
     train_org_image,
-    train_input,
     mean_foreground_embedding,
     mean_background_embedding,
     model,
     n_segments=N_SEGMENTS_ROBUST,
-    threshold_embedding=0,
-    threshold_closeness=0,
+    threshold_embedding=SUPERPIXEL_OVERLAP_THRESHOLD,
+    threshold_closeness=THRESHOLD_CLOSNESS,
     cosine_function=get_cosine_sim_score,
     get_foreground_background_embeddings_function=get_foreground_background_embeddings,
     scan_outer_pixels=True,
@@ -290,7 +306,7 @@ def create_embedding_mask(
                 mean_background_embedding,
                 relevant_superpixels_thresholded=outer_superpixels,
                 foreground_embeddings=outer_foreground_embedding,
-                threshold=threshold_closeness,
+                threshold_closeness=threshold_closeness,
             )
             to_be_dropped = [
                 i
@@ -330,24 +346,22 @@ def create_embedding_mask(
 
 
 def get_embedding_mask_or_box(
-    train_input,
     train_label,
     train_org_image,
     model,
     mean_foreground_embedding,
     mean_background_embedding,
-    iou_threshold=0.1,
-    mask_occupancy_threshold=0.04,
+    iou_threshold=IOU_THRESHOLD,
+    mask_occupancy_threshold=MASK_OCCUPANCY_THRESHOLD,
     n_segments=N_SEGMENTS_ROBUST,
-    threshold_embedding=0,
-    threshold_closeness=0,
+    threshold_embedding=SUPERPIXEL_OVERLAP_THRESHOLD,
+    threshold_closeness=THRESHOLD_CLOSNESS,
     iter=1,
     device=DEVICE,
 ):
     embedding_mask, _, _, _ = create_embedding_mask(
         train_label,
         train_org_image,
-        train_input,
         n_segments=n_segments,
         threshold_embedding=threshold_embedding,
         iter=iter,

@@ -18,14 +18,16 @@ if EXPORT_BEST_MODEL == False:
     model_name = None
 
 # Generic thresholds and superpixel settings
-IOU_THRESHOLD = 0
-MASK_OCCUPANCY_THRESHOLD = 0
+IOU_THRESHOLD = 0.1
+MASK_OCCUPANCY_THRESHOLD = 0.04
 N_SEGMENTS = 250
 SLIC_COMPACTNESS = 10
+SUPERPIXEL_OVERLAP_THRESHOLD = 0.1
 
 # robustBoxshrink settings and thresholds
 N_SEGMENTS_ROBUST = 300
-
+# If || dist(background) - dist(foreground)|| <= THRESHOLD_CLOSNESS, then foreground
+THRESHOLD_CLOSNESS = 0
 
 # FCRF settings
 PAIRWISE_GAUSSIAN = (5, 5)
