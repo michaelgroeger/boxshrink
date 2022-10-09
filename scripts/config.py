@@ -17,9 +17,16 @@ EXPORT_BEST_MODEL = True
 if EXPORT_BEST_MODEL == False:
     model_name = None
 
+# Thresholds and superpixel settings
 IOU_THRESHOLD = 0
 MASK_OCCUPANCY_THRESHOLD = 0
 N_SEGMENTS = 250
+
+# FCRF settings
+PAIRWISE_GAUSSIAN = (5, 5)
+PAIRWISE_BILATERAL = (25, 25)
+RGB_STD = (10, 10, 10)
+NUM_INFERENCE = 10
 
 ENCODER = "vgg16"
 DECODER = "Unet"
