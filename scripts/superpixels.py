@@ -104,7 +104,9 @@ def visualize_superpixels(boundaries, **images):
     plt.show()
 
 
-def export_superpixel_crf_masks_for_dataset(dataset, export_path, device=DEVICE):
+def export_superpixel_crf_masks_for_dataset(
+    dataset, export_path, device=DEVICE, save_as_png=True
+):
     images = dataset.X
     masks = dataset.Y
     for i, _ in tqdm(enumerate(images)):
@@ -120,6 +122,48 @@ def export_superpixel_crf_masks_for_dataset(dataset, export_path, device=DEVICE)
         img, sp_mask = img.to(device), sp_mask.to(device)
         pseudomask = process_batch_crf(img, sp_mask)
         pseudomask = pass_pseudomask_or_ground_truth(mask.to(device), pseudomask)
-        pseudomask = Image.fromarray(np.uint8(pseudomask.cpu().detach() * 255), "L")
-        output_path_mask = (export_path + "/" + _.split("/")[-1]).replace("tif", "png")
-        pseudomask.save(output_path_mask, quality=100, subsampling=0)
+        if save_as_png == True:
+            pseudomask = Image.fromarray(np.uint8(pseudomask.cpu().detach() * 255), "L")
+            output_path_mask = (export_path + "/" + _.split("/")[-1]).replace(
+                "tif", "png"
+            )
+            pseudomask.save(output_path_mask, quality=100, subsampling=0)
+        else:
+            output_path_mask = (export_path + "/" + _.split("/")[-1]).replace(
+                "tif", "pt"
+            )
+            torch.save(pseudomask, output_path_mask)
+
+
+def return_superpixel_crf_masks(dataset, device=DEVICE):
+    images = dataset.X
+    masks = dataset.Y
+    mask_dict = {}
+    for i, _ in tqdm(enumerate(images)):
+        # load image
+        img = torch.tensor(imread(_))
+        # load mask
+        if ".tif" in masks[i]:
+            mask = torch.tensor(imread(masks[i])).long()
+        elif ".png" in masks[i]:
+            mask = torch.Tensor(np.array(Image.open(masks[i]))).long()
+        # initialize base masks once
+        if i == 0:
+            base_masks = torch.zeros(
+                [
+                    len(images),
+                    mask.shape[0],
+                    mask.shape[1],
+                ],
+                dtype=mask.dtype,
+                layout=mask.layout,
+                device=mask.device,
+            )
+        mask[mask > 0] = 1
+        sp_mask = create_superpixel_mask(mask, img, N_SEGMENTS=200, threshold=0.60)
+        img, sp_mask = img.to(device), sp_mask.to(device)
+        pseudomask = process_batch_crf(img, sp_mask)
+        pseudomask = pass_pseudomask_or_ground_truth(mask.to(device), pseudomask)
+        base_masks[i] += pseudomask
+        mask_dict[i] = masks[i].replace("tif", "pt").replace("png", "pt").split("/")[-1]
+    return base_masks, mask_dict
