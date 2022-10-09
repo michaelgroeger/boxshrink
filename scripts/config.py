@@ -17,10 +17,15 @@ EXPORT_BEST_MODEL = True
 if EXPORT_BEST_MODEL == False:
     model_name = None
 
-# Thresholds and superpixel settings
+# Generic thresholds and superpixel settings
 IOU_THRESHOLD = 0
 MASK_OCCUPANCY_THRESHOLD = 0
 N_SEGMENTS = 250
+SLIC_COMPACTNESS = 10
+
+# robustBoxshrink settings and thresholds
+N_SEGMENTS_ROBUST = 300
+
 
 # FCRF settings
 PAIRWISE_GAUSSIAN = (5, 5)
