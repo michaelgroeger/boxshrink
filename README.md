@@ -8,7 +8,7 @@ the generated superpixels. This algorithm will reject superpixels that don't ove
 2. robustBoxshrink: Compares the superpixels on the boundary with the mean foreground and background embedding of the training dataset. Those whose cosine distance is closer to the background embedding are being rejected. Finally, a F-CRF is being run on the pseudomask. ![robustBoxshrink-Overview](/images/robustBoxshrink_Overview.png)
 
 ## Usage
-Please check the config file in `scripts/config` to set paths and hyperparameters. Decide whether you want to generate masks by choosing the notebook file for one of the two proposed algorithms. Generate the masks and then train any segmentation model you want with the pseudomasks as new input.
+Please check the config file in `scripts/config` to set paths and hyperparameters. Please have a look at the notebook files if you want to generate bounding boxes from masks, run rapidBoxshrink or robustBoxshrink. After you generated the masks feel free to use them as training input as shown in `train.ipynb`. Have fun!
 
 ## Citation
 If you use this work please cite:
