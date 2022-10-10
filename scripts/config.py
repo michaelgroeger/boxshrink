@@ -5,12 +5,15 @@ import torch
 # Training settings
 BASE_DIR = "/".join(os.getcwd().split("/"))
 DATA_DIR = BASE_DIR + "/data"
+BOX_DIR = DATA_DIR + "/boxmasks"
+RAPID_DIR = DATA_DIR + "/testing/rapid_boxshrink"
+ROBUST_DIR = DATA_DIR + "/testing/robust_boxshrink"
 BEST_MODEL_DIR = BASE_DIR + "/model/best"
 CHECKPOINT_MODEL_DIR = BASE_DIR + "/model/checkpoint"
 EXPORT_CSV_DIR = BASE_DIR + "/model/metrics"
 EVAL_ON_MASKS = True
-# Training input should be one of Boxes, rapid_boxshrink, robust_boxshrink
-TRAINING_INPUT = "Boxes"
+# Training input should be one of boxes, rapid_boxshrink, robust_boxshrink
+TRAINING_INPUT = "robust_boxshrink"
 # Choose here any prefix to identify your runs
 STATE = "_".join(["Benchmarking", TRAINING_INPUT])
 EXPORT_BEST_MODEL = True
@@ -56,7 +59,7 @@ STEP_SIZE = 5
 GAMMA = 0.5
 
 LOSS = "CrossEntropyLoss"
-BATCH_SIZE = 32
+BATCH_SIZE = 10
 N_EPOCHS = 25
 START_EPOCH = 0
 # Return intermediate results & Plot losses
