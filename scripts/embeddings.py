@@ -76,7 +76,7 @@ def fill_embedding_matrix(
 
 
 def get_foreground_background_embeddings(
-    argmax_prediction_per_class,
+    mask,
     org_img,
     model,
     threshold=SUPERPIXEL_OVERLAP_THRESHOLD,
@@ -97,7 +97,7 @@ def get_foreground_background_embeddings(
             start_label=start_label,
         )
     )
-    hadamard = all_superpixels_mask.to(device) * argmax_prediction_per_class.to(device)
+    hadamard = all_superpixels_mask.to(device) * mask.to(device)
     overlap = (hadamard / class_indx).type(torch.IntTensor)
     # Get numbers to list, start from second element because first is 0
     relevant_superpixels = torch.unique(overlap).int().tolist()[1:]
@@ -127,7 +127,7 @@ def get_foreground_background_embeddings(
         foreground_embeddings,
         base,
         all_superpixels_mask,
-        relevant_superpixels,
+        foreground_superpixels,
         model,
         device=DEVICE,
     )
@@ -397,7 +397,6 @@ def generate_embedding_masks_for_dataset(
                 for idx in range(train_labels.shape[0]):
                     mask_name = dataset.X[filecounter]
                     pseudomask = get_embedding_mask_or_box(
-                        train_inputs[idx],
                         train_labels[idx],
                         train_org_images[idx],
                         model,
@@ -444,7 +443,6 @@ def return_embedding_masks_for_dataset(
                 for idx in range(train_labels.shape[0]):
                     mask_name = dataset.X[idx]
                     pseudomask = get_embedding_mask_or_box(
-                        train_inputs[idx],
                         train_labels[idx],
                         train_org_images[idx],
                         model,

@@ -53,7 +53,7 @@ def load_test_masks_in_one_tensor(base_masks, files, mask_dict):
 
 
 def test_robust_boxshrink():
-    TESTING_DIR = os.path.join(os.getcwd(), "tests/test_embedding_masks")
+    TESTING_DIR = os.path.join(os.getcwd(), "tests/test_robust_boxshrink_masks")
     EMBEDDING_DIR = os.path.join(DATA_DIR, "mean_embeddings/")
     generated_masks, mask_dict = robust_boxshrink(DATA_DIR, EMBEDDING_DIR)
     test_mask_files = return_files_in_directory(TESTING_DIR, ".pt")
