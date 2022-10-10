@@ -216,3 +216,13 @@ def overlay_mask_on_image(org_image, cam):
     rgb_img = np.float32(org_image) / 255
     cam_rgb = show_cam_on_image(rgb_img, cam, use_rgb=True)
     return cam_rgb
+
+
+def epoch_time(start_time, end_time):
+    elapsed_time = end_time - start_time
+    elapsed_mins = int(elapsed_time / 60)
+    elapsed_secs = int(elapsed_time - (elapsed_mins * 60))
+    return elapsed_mins, elapsed_secs
+
+
+label_colors = np.array([(0, 0, 0), (128, 128, 128)])
