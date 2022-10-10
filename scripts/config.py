@@ -29,6 +29,10 @@ N_SEGMENTS_ROBUST = 300
 # If || dist(background) - dist(foreground)|| <= THRESHOLD_CLOSNESS, then foreground
 THRESHOLD_CLOSNESS = 0
 
+# rapidBoxshrink settings and threshold
+SUPERPIXEL_OVERLAP_THRESHOLD_RAPID = 0.5
+N_SEGMENTS_RAPID = 200
+
 # FCRF settings
 PAIRWISE_GAUSSIAN = (5, 5)
 PAIRWISE_BILATERAL = (25, 25)
