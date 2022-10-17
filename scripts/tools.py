@@ -172,16 +172,6 @@ def return_batch_information(
         )
 
 
-# Function to unpack and flatten a list of lists
-# From: https://stackoverflow.com/questions/2158395/flatten-an-irregular-list-of-lists
-def flatten(L):
-    for item in L:
-        try:
-            yield from flatten(item)
-        except TypeError:
-            yield item
-
-
 # For sorting images and masks
 # https://nedbatchelder.com/blog/200712/human_sorting.html
 def tryint(s):
