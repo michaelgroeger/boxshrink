@@ -20,7 +20,7 @@ from scripts.config import (
     RGB_STD,
 )
 
-jaccard_crf = JaccardIndex(num_classes=len(CLASSES), average="none", ignore_index=0).to(
+jaccard_crf = JaccardIndex(num_classes=len(CLASSES), average="none", ignore_index=0, task="binary").to(
     DEVICE
 )
 
