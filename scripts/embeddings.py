@@ -393,7 +393,7 @@ def generate_embedding_masks_for_dataset(
         with tqdm(
             data_loader, unit="batch", desc="Generating Embedding Masks"
         ) as tepoch:
-            for train_inputs, train_labels, train_org_images in tepoch:
+            for _, train_labels, train_org_images in tepoch:
                 for idx in range(train_labels.shape[0]):
                     mask_name = dataset.X[filecounter]
                     pseudomask = get_embedding_mask_or_box(
